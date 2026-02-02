@@ -5,13 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aurora Visibility - Södra Sandby</title>
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🌌 Aurora Visibility Prediction</h1>
-            <p class="location">Södra Sandby, Sweden (55.7°N, 13.4°E)</p>
+            <div class="header-content">
+                <h1>🌌 Aurora Visibility Prediction</h1>
+                <button id="settingsBtn" class="settings-btn" aria-label="Settings">⚙️</button>
+            </div>
+            <p class="location" id="locationDisplay">Södra Sandby, Sweden (55.7°N, 13.4°E)</p>
             <p class="last-update">Last updated: <span id="lastUpdate">Loading...</span></p>
         </header>
 
@@ -82,6 +87,8 @@
             <p>Auto-refresh every 5 minutes</p>
         </footer>
     </div>
+
+    <div id="settingsModalContainer"></div>
 
     <script type="module" src="js/main.js"></script>
 </body>

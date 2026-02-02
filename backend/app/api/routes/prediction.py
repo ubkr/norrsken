@@ -1,7 +1,7 @@
 """Prediction API endpoints"""
 from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 from ...models.prediction import (
     PredictionResponse,
     ForecastResponse,
@@ -19,15 +19,18 @@ router = APIRouter(prefix="/api/v1/prediction", tags=["prediction"])
 
 
 @router.get("/current", response_model=PredictionResponse)
-async def get_current_prediction():
+async def get_current_prediction(
+    lat: Optional[float] = Query(None, ge=-90, le=90, description="Latitude"),
+    lon: Optional[float] = Query(None, ge=-180, le=180, description="Longitude")
+):
     """
     Get current aurora visibility prediction with all data sources.
 
     Returns combined aurora and weather data with visibility score.
     """
     try:
-        lat = settings.location_lat
-        lon = settings.location_lon
+        lat = lat if lat is not None else settings.location_lat
+        lon = lon if lon is not None else settings.location_lon
 
         # Fetch aurora and weather data
         aurora_data = await aggregator.fetch_aurora_data(lat, lon)
@@ -61,7 +64,9 @@ async def get_current_prediction():
 
 @router.get("/forecast", response_model=ForecastResponse)
 async def get_forecast(
-    hours: int = Query(default=24, ge=1, le=72, description="Number of hours to forecast")
+    hours: int = Query(default=24, ge=1, le=72, description="Number of hours to forecast"),
+    lat: Optional[float] = Query(None, ge=-90, le=90, description="Latitude"),
+    lon: Optional[float] = Query(None, ge=-180, le=180, description="Longitude")
 ):
     """
     Get hourly aurora visibility forecast.
@@ -76,8 +81,8 @@ async def get_forecast(
         Array of hourly predictions
     """
     try:
-        lat = settings.location_lat
-        lon = settings.location_lon
+        lat = lat if lat is not None else settings.location_lat
+        lon = lon if lon is not None else settings.location_lon
 
         # Fetch current data
         aurora_data = await aggregator.fetch_aurora_data(lat, lon)

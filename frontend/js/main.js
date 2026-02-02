@@ -7,6 +7,8 @@ import { VisibilityScoreDisplay } from './components/visibility-score.js';
 import { AuroraDisplay } from './components/aurora-display.js';
 import { WeatherDisplay } from './components/weather-display.js';
 import { ForecastChart } from './components/forecast-chart.js';
+import { LocationManager } from './location-manager.js';
+import { SettingsModal } from './components/settings-modal.js';
 
 class App {
     constructor() {
@@ -15,8 +17,11 @@ class App {
         this.auroraDisplay = new AuroraDisplay();
         this.weatherDisplay = new WeatherDisplay();
         this.forecastChart = new ForecastChart();
+        this.locationManager = new LocationManager();
+        this.settingsModal = new SettingsModal(this.locationManager);
 
         this.lastUpdateEl = document.getElementById('lastUpdate');
+        this.locationDisplayEl = document.getElementById('locationDisplay');
         this.refreshInterval = 5 * 60 * 1000; // 5 minutes
     }
 
@@ -25,6 +30,23 @@ class App {
      */
     async init() {
         console.log('Initializing Aurora Visibility app...');
+
+        // Set up settings button
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                this.settingsModal.open();
+            });
+        }
+
+        // Listen for location changes
+        window.addEventListener('locationChanged', () => {
+            console.log('Location changed, reloading data...');
+            this.loadData();
+        });
+
+        // Update location display
+        this.updateLocationDisplay();
 
         // Load initial data
         await this.loadData();
@@ -42,8 +64,12 @@ class App {
         try {
             console.log('Fetching data from API...');
 
+            // Get current location
+            const location = this.locationManager.getLocation();
+            console.log('Using location:', location);
+
             // Fetch current prediction
-            const prediction = await this.api.getCurrentPrediction();
+            const prediction = await this.api.getCurrentPrediction(location.lat, location.lon);
             console.log('Current prediction:', prediction);
 
             // Update UI components
@@ -51,11 +77,12 @@ class App {
             this.auroraDisplay.update(prediction.aurora);
             this.weatherDisplay.update(prediction.weather);
 
-            // Update last update time
+            // Update last update time and location display
             this.updateLastUpdateTime();
+            this.updateLocationDisplay();
 
             // Fetch and update forecast
-            const forecast = await this.api.getForecast(24);
+            const forecast = await this.api.getForecast(24, location.lat, location.lon);
             console.log('Forecast data:', forecast);
             this.forecastChart.update(forecast.forecast);
 
@@ -77,6 +104,16 @@ class App {
             minute: '2-digit',
             second: '2-digit'
         });
+    }
+
+    /**
+     * Update location display in header
+     */
+    updateLocationDisplay() {
+        if (!this.locationDisplayEl) return;
+
+        const location = this.locationManager.getLocation();
+        this.locationDisplayEl.textContent = `${location.name} (${location.lat.toFixed(1)}°N, ${location.lon.toFixed(1)}°E)`;
     }
 
     /**
