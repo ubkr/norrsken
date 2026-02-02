@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurora Visibility - Södra Sandby</title>
+    <link rel="stylesheet" href="css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌌 Aurora Visibility Prediction</h1>
+            <p class="location">Södra Sandby, Sweden (55.7°N, 13.4°E)</p>
+            <p class="last-update">Last updated: <span id="lastUpdate">Loading...</span></p>
+        </header>
+
+        <main>
+            <!-- Visibility Score Card -->
+            <section class="score-card" id="scoreCard">
+                <div class="score-value" id="scoreValue">--</div>
+                <div class="score-label">Visibility Score</div>
+                <div class="recommendation" id="recommendation">Loading...</div>
+
+                <div class="score-breakdown">
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">Aurora Activity</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill aurora" id="auroraBar" style="width: 0%"></div>
+                        </div>
+                        <div class="breakdown-value" id="auroraValue">0/40</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">Cloud Cover</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill clouds" id="cloudsBar" style="width: 0%"></div>
+                        </div>
+                        <div class="breakdown-value" id="cloudsValue">0/30</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">Visibility</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill visibility" id="visibilityBar" style="width: 0%"></div>
+                        </div>
+                        <div class="breakdown-value" id="visibilityValue">0/20</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">Precipitation</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill precipitation" id="precipitationBar" style="width: 0%"></div>
+                        </div>
+                        <div class="breakdown-value" id="precipitationValue">0/10</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Sources -->
+            <section class="data-grid">
+                <div class="data-card">
+                    <h2>Aurora Activity</h2>
+                    <div id="auroraData">
+                        <p class="loading">Loading...</p>
+                    </div>
+                </div>
+                <div class="data-card">
+                    <h2>Weather Conditions</h2>
+                    <div id="weatherData">
+                        <p class="loading">Loading...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 24-Hour Forecast Chart -->
+            <section class="chart-section">
+                <h2>24-Hour Forecast</h2>
+                <canvas id="forecastChart"></canvas>
+            </section>
+        </main>
+
+        <footer>
+            <p>Data sources: NOAA SWPC, Auroras.live, SMHI, Open-Meteo</p>
+            <p>Auto-refresh every 5 minutes</p>
+        </footer>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
