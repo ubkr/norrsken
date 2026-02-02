@@ -29,8 +29,8 @@ class DataAggregator:
         # Initialize weather clients
         self.weather_clients = [
             MetNoClient(),      # Primary - Nordic weather
-            OpenMeteoClient(),  # Secondary
-            SMHIClient()        # Tertiary (currently broken)
+            SMHIClient(),       # Secondary - Swedish official weather
+            OpenMeteoClient()   # Tertiary
         ]
 
     async def fetch_aurora_data(self, lat: float, lon: float) -> AuroraResponse:
@@ -104,8 +104,8 @@ class DataAggregator:
 
         Tries sources in order:
         1. Met.no (primary)
-        2. Open-Meteo (secondary)
-        3. SMHI (tertiary)
+        2. SMHI (secondary)
+        3. Open-Meteo (tertiary)
 
         Uses cache to reduce API calls.
 

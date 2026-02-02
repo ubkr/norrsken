@@ -12,7 +12,7 @@ logger = setup_logger(__name__)
 class SMHIClient(WeatherSourceBase):
     """Client for SMHI weather forecast data"""
 
-    BASE_URL = "http://opendata-download-metfcst.smhi.se/api/category/pmp1.5g/version/1"
+    BASE_URL = "https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2"
 
     @property
     def source_name(self) -> str:
@@ -34,7 +34,7 @@ class SMHIClient(WeatherSourceBase):
         """
         try:
             # Build URL
-            url = f"{self.BASE_URL}/geopoint/lat/{lat}/lon/{lon}/data.json"
+            url = f"{self.BASE_URL}/geotype/point/lon/{lon}/lat/{lat}/data.json"
 
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.get(url)
@@ -65,9 +65,9 @@ class SMHIClient(WeatherSourceBase):
             # Extract parameters
             params = {p["name"]: p["values"][0] for p in current.get("parameters", [])}
 
-            # Cloud cover: use total cloud cover (tcc) in oktas (0-8)
+            # Cloud cover: use total cloud cover mean (tcc_mean) in oktas (0-8)
             # Convert to percentage: (oktas / 8) * 100
-            tcc = params.get("tcc", 0)  # Total cloud cover
+            tcc = params.get("tcc_mean", 4)  # Total cloud cover mean (default to 4 octas = 50%)
             cloud_cover_pct = (tcc / 8.0) * 100
 
             # Visibility in km
