@@ -87,6 +87,9 @@ def get_recommendation(score: float, kp_index: float, cloud_cover: float) -> str
     """
     Generate human-readable recommendation based on score and conditions.
 
+    KP >= 3 is required for aurora visibility at Södra Sandby (55.7°N).
+    No outdoor suggestion is made if KP < 3, regardless of weather.
+
     Args:
         score: Total visibility score (0-100)
         kp_index: KP index (0-9)
@@ -95,21 +98,27 @@ def get_recommendation(score: float, kp_index: float, cloud_cover: float) -> str
     Returns:
         Recommendation string
     """
+    if kp_index < 3:
+        if score >= 60:
+            return "Weather conditions are excellent, but aurora activity is too low for this latitude (KP < 3). Not worth going outside yet - wait for stronger activity."
+        elif score >= 40:
+            return "Aurora activity too low for this latitude (KP < 3). Aurora viewing not possible regardless of weather."
+        else:
+            return "Aurora activity too low (KP < 3) and weather conditions unfavorable. Aurora viewing not possible."
+
     if score >= 80:
-        return "Excellent conditions! Great chance to see aurora. Get outside!"
+        return "Excellent conditions! Aurora is active (KP ≥ 3) and weather is clear. Great chance to see aurora - get outside!"
     elif score >= 60:
-        return "Good conditions. Worth checking outside if it's dark."
+        if cloud_cover > 50:
+            return "Good aurora activity (KP ≥ 3), but moderate cloud cover may reduce visibility. Worth checking outside if clouds break."
+        else:
+            return "Good conditions! Aurora is active (KP ≥ 3) and weather is favorable. Worth checking outside."
     elif score >= 40:
-        if kp_index < 3:
-            return "Fair conditions, but aurora activity is low."
-        elif cloud_cover > 75:
-            return "Fair conditions, but heavy cloud cover may block visibility."
+        if cloud_cover > 75:
+            return "Aurora is active (KP ≥ 3), but heavy cloud cover will likely block visibility. Not recommended unless skies clear."
         else:
-            return "Fair conditions. Aurora may be visible."
+            return "Fair conditions. Aurora is active (KP ≥ 3) but conditions are marginal. May be visible in dark areas."
     elif score >= 20:
-        if kp_index < 3:
-            return "Poor conditions. Aurora activity too low for this latitude."
-        else:
-            return "Poor conditions. Weather not favorable for aurora viewing."
+        return "Aurora is active (KP ≥ 3), but weather conditions are poor. Aurora viewing not recommended."
     else:
         return "Very poor conditions. Aurora viewing not recommended."

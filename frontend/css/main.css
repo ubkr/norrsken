@@ -136,6 +136,8 @@ header h1 {
 }
 
 .breakdown-label {
+    display: flex;
+    align-items: center;
     text-align: left;
     color: var(--text-secondary);
 }
@@ -436,6 +438,75 @@ footer p {
     background: var(--bg-secondary);
     color: var(--text-secondary);
     cursor: not-allowed;
+}
+
+/* Info Icon */
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 0.75rem;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    margin-left: 0.35rem;
+    position: relative;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.info-icon:hover {
+    color: var(--accent);
+    background: var(--bg-primary);
+}
+
+/* KP Badge */
+.kp-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+}
+
+.kp-very-high {
+    background: rgba(242, 139, 130, 0.2);
+    color: var(--danger);
+}
+
+.kp-high {
+    background: rgba(253, 214, 99, 0.2);
+    color: var(--warning);
+}
+
+.kp-moderate {
+    background: rgba(129, 201, 149, 0.2);
+    color: var(--success);
+}
+
+.kp-low {
+    background: rgba(154, 160, 166, 0.2);
+    color: var(--text-secondary);
+}
+
+.kp-very-low {
+    background: rgba(154, 160, 166, 0.15);
+    color: var(--text-secondary);
+    opacity: 0.8;
+}
+
+/* KP Description */
+.kp-description {
+    font-size: 0.82rem;
+    font-style: italic;
+    color: var(--text-secondary);
+    padding: 0.25rem 0 0.25rem 0.25rem;
 }
 
 /* Responsive */
