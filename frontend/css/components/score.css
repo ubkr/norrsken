@@ -105,6 +105,33 @@
     color: var(--color-text-primary);
 }
 
+.tooltip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    max-width: 280px;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    font-size: var(--font-size-xs);
+    line-height: 1.4;
+    z-index: var(--z-tooltip);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition: opacity var(--transition-fast), transform var(--transition-fast), visibility var(--transition-fast);
+}
+
+.tooltip.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
 .breakdown-value {
     font-family: var(--font-family-mono);
     color: var(--color-text-primary);
