@@ -6,6 +6,7 @@ import { MapSelector } from './map-selector.js';
 
 export class SettingsModal {
     constructor(locationManager) {
+        this.modalTransitionDelay = 300;
         this.locationManager = locationManager;
         this.mapSelector = new MapSelector();
         this.isOpen = false;
@@ -111,6 +112,10 @@ export class SettingsModal {
             this.updateLocationDisplay(currentLocation);
 
             this.mapSelector.initialize('mapContainer', currentLocation);
+
+            setTimeout(() => {
+                this.mapSelector.invalidateSize();
+            }, this.modalTransitionDelay);
         }, 10);
     }
 
@@ -126,7 +131,7 @@ export class SettingsModal {
             this.modal.style.display = 'none';
             this.mapSelector.destroy();
             this.resetForm();
-        }, 300);
+        }, this.modalTransitionDelay);
     }
 
     /**

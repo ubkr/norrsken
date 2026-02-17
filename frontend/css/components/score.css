@@ -1,0 +1,155 @@
+/* Visibility Score Component */
+
+.score-card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.score-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-secondary));
+    opacity: 0.5;
+}
+
+.score-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md), var(--glow-aurora);
+    border-color: var(--color-accent-primary);
+}
+
+/* Score Display */
+.score-display {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+    position: relative;
+}
+
+.score-value {
+    font-size: 6rem;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 0%, var(--color-accent-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 15px rgba(0, 255, 200, 0.3));
+    font-family: var(--font-family-base);
+    letter-spacing: -0.05em;
+}
+
+.score-label {
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-secondary);
+    margin-top: var(--space-xs);
+}
+
+.recommendation-pill {
+    margin-top: var(--space-lg);
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    font-weight: 500;
+    font-size: var(--font-size-md);
+    color: var(--color-text-primary);
+    backdrop-filter: blur(4px);
+}
+
+/* Breakdown List */
+.score-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.breakdown-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+}
+
+.breakdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: var(--font-size-sm);
+}
+
+.breakdown-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-text-secondary);
+}
+
+.info-icon {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    cursor: help;
+    transition: color var(--transition-fast);
+}
+
+.info-icon:hover {
+    color: var(--color-text-primary);
+}
+
+.breakdown-value {
+    font-family: var(--font-family-mono);
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Progress Bars */
+.progress-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    100% { transform: translateX(100%); }
+}
+
+/* Aurora Color Variants */
+.progress-fill.aurora { background: var(--color-metric-aurora); box-shadow: 0 0 10px rgba(188, 111, 241, 0.4); }
+.progress-fill.clouds { background: var(--color-metric-clouds); }
+.progress-fill.visibility { background: var(--color-metric-visibility); }
+.progress-fill.precipitation { background: var(--color-metric-precip); }
+
+/* Score Status Modifiers (applied via JS) */
+.score-excellent .score-value { color: var(--color-status-excellent); -webkit-text-fill-color: var(--color-status-excellent); }
+.score-good .score-value { color: var(--color-status-good); -webkit-text-fill-color: var(--color-status-good); }
+.score-fair .score-value { color: var(--color-status-fair); -webkit-text-fill-color: var(--color-status-fair); }
+.score-poor .score-value { color: var(--color-status-poor); -webkit-text-fill-color: var(--color-status-poor); }

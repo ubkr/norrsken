@@ -66,6 +66,14 @@ export class MapSelector {
     }
 
     /**
+     * Refresh map size after container visibility changes
+     */
+    invalidateSize() {
+        if (!this.map) return;
+        this.map.invalidateSize({ pan: false });
+    }
+
+    /**
      * Handle location selection with debounced geocoding
      */
     onLocationSelected(lat, lon) {

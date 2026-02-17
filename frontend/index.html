@@ -10,77 +10,99 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="header-content">
-                <h1>🌌 Aurora Visibility Prediction</h1>
-                <button id="settingsBtn" class="settings-btn" aria-label="Settings">⚙️</button>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-top">
+                <h1>Aurora Visibility</h1>
+                <button id="settingsBtn" class="settings-btn settings-trigger" aria-label="Settings">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
             </div>
+            
             <p class="location" id="locationDisplay">Södra Sandby, Sweden (55.7°N, 13.4°E)</p>
-            <p class="last-update">Last updated: <span id="lastUpdate">Loading...</span></p>
+            <p class="text-center"><small class="last-update">Updated: <span id="lastUpdate" class="font-mono">Loading...</span></small></p>
         </header>
 
-        <main>
+        <main class="main-content">
             <!-- Visibility Score Card -->
-            <section class="score-card" id="scoreCard">
-                <div class="score-value" id="scoreValue">--</div>
-                <div class="score-label">Visibility Score</div>
-                <div class="recommendation" id="recommendation">Loading...</div>
+            <section class="score-card score-section" id="scoreCard">
+                <div class="score-display">
+                    <div class="score-value" id="scoreValue">--</div>
+                    <div class="score-label">Visibility Score</div>
+                    <div class="recommendation-pill" id="recommendation">Loading...</div>
+                </div>
 
                 <div class="score-breakdown">
                     <div class="breakdown-item">
-                        <div class="breakdown-label">
-                            Aurora Activity
-                            <span class="info-icon" title="Aurora activity score (0-40 points). Based on KP index. KP ≥ 3 required for visibility at this latitude.">ⓘ</span>
+                        <div class="breakdown-header">
+                            <div class="breakdown-label">
+                                Aurora Activity
+                                <span class="info-icon" title="Aurora activity score (0-40 points). Based on KP index. KP ≥ 3 required for visibility at this latitude.">ⓘ</span>
+                            </div>
+                            <div class="breakdown-value" id="auroraValue">0/40</div>
                         </div>
-                        <div class="progress-bar">
+                        <div class="progress-track">
                             <div class="progress-fill aurora" id="auroraBar" style="width: 0%"></div>
                         </div>
-                        <div class="breakdown-value" id="auroraValue">0/40</div>
                     </div>
+                    
                     <div class="breakdown-item">
-                        <div class="breakdown-label">
-                            Cloud Cover
-                            <span class="info-icon" title="Cloud cover score (0-30 points). Clear skies score highest. Based on cloud cover percentage.">ⓘ</span>
+                        <div class="breakdown-header">
+                            <div class="breakdown-label">
+                                Cloud Cover
+                                <span class="info-icon" title="Cloud cover score (0-30 points). Clear skies score highest. Based on cloud cover percentage.">ⓘ</span>
+                            </div>
+                            <div class="breakdown-value" id="cloudsValue">0/30</div>
                         </div>
-                        <div class="progress-bar">
+                        <div class="progress-track">
                             <div class="progress-fill clouds" id="cloudsBar" style="width: 0%"></div>
                         </div>
-                        <div class="breakdown-value" id="cloudsValue">0/30</div>
                     </div>
+
                     <div class="breakdown-item">
-                        <div class="breakdown-label">
-                            Visibility
-                            <span class="info-icon" title="Atmospheric visibility score (0-20 points). Higher visibility range means better aurora viewing conditions.">ⓘ</span>
+                        <div class="breakdown-header">
+                            <div class="breakdown-label">
+                                Visibility
+                                <span class="info-icon" title="Atmospheric visibility score (0-20 points). Higher visibility range means better aurora viewing conditions.">ⓘ</span>
+                            </div>
+                            <div class="breakdown-value" id="visibilityValue">0/20</div>
                         </div>
-                        <div class="progress-bar">
+                        <div class="progress-track">
                             <div class="progress-fill visibility" id="visibilityBar" style="width: 0%"></div>
                         </div>
-                        <div class="breakdown-value" id="visibilityValue">0/20</div>
                     </div>
+
                     <div class="breakdown-item">
-                        <div class="breakdown-label">
-                            Precipitation
-                            <span class="info-icon" title="Precipitation score (0-10 points). No precipitation scores highest. Rain or snow reduces aurora viewing conditions.">ⓘ</span>
+                        <div class="breakdown-header">
+                            <div class="breakdown-label">
+                                Precipitation
+                                <span class="info-icon" title="Precipitation score (0-10 points). No precipitation scores highest. Rain or snow reduces aurora viewing conditions.">ⓘ</span>
+                            </div>
+                            <div class="breakdown-value" id="precipitationValue">0/10</div>
                         </div>
-                        <div class="progress-bar">
+                        <div class="progress-track">
                             <div class="progress-fill precipitation" id="precipitationBar" style="width: 0%"></div>
                         </div>
-                        <div class="breakdown-value" id="precipitationValue">0/10</div>
                     </div>
                 </div>
             </section>
 
             <!-- Data Sources -->
-            <section class="data-grid">
+            <section class="data-sources-grid data-grid-section">
                 <div class="data-card">
-                    <h2>Aurora Activity</h2>
+                    <h2>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+                        Aurora Activity
+                    </h2>
                     <div id="auroraData">
                         <p class="loading">Loading...</p>
                     </div>
                 </div>
                 <div class="data-card">
-                    <h2>Weather Conditions</h2>
+                    <h2>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19c0-3.037-2.463-5.5-5.5-5.5S6.5 15.963 6.5 19"/></svg>
+                        Weather Conditions
+                    </h2>
                     <div id="weatherData">
                         <p class="loading">Loading...</p>
                     </div>
@@ -94,9 +116,8 @@
             </section>
         </main>
 
-        <footer>
-            <p>Data sources: NOAA SWPC, Auroras.live, SMHI, Open-Meteo</p>
-            <p>Auto-refresh every 5 minutes</p>
+        <footer class="app-footer">
+            <p>Data sources: NOAA SWPC, Auroras.live, SMHI, Open-Meteo • Auto-refresh every 5 minutes</p>
         </footer>
     </div>
 

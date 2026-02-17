@@ -8,6 +8,25 @@ export class ForecastChart {
         this.chart = null;
     }
 
+    getCssVariable(tokenName, fallback = '') {
+        const value = getComputedStyle(document.documentElement)
+            .getPropertyValue(tokenName)
+            .trim();
+        return value || fallback;
+    }
+
+    hexToRgba(hex, alpha) {
+        const normalized = hex.replace('#', '').trim();
+        if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+            return hex;
+        }
+
+        const red = parseInt(normalized.slice(0, 2), 16);
+        const green = parseInt(normalized.slice(2, 4), 16);
+        const blue = parseInt(normalized.slice(4, 6), 16);
+        return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+    }
+
     /**
      * Initialize the chart
      * @param {Array} forecastData - Array of forecast items
@@ -16,6 +35,16 @@ export class ForecastChart {
         if (this.chart) {
             this.chart.destroy();
         }
+
+        const colorStatusExcellent = this.getCssVariable('--color-status-excellent', '#00ffc8');
+        const colorStatusGood = this.getCssVariable('--color-status-good', '#a6ff00');
+        const colorStatusFair = this.getCssVariable('--color-status-fair', '#ffcc00');
+        const colorStatusPoor = this.getCssVariable('--color-status-poor', '#ff3366');
+        const colorSeriesLine = this.getCssVariable('--color-accent-tertiary', '#00b3ff');
+        const colorSeriesFill = this.hexToRgba(colorSeriesLine, 0.15);
+        const colorTickText = this.getCssVariable('--color-text-secondary', '#8e9bb3');
+        const colorAxisBorder = this.getCssVariable('--border-color', 'rgba(255, 255, 255, 0.1)');
+        const colorGrid = this.getCssVariable('--border-color', 'rgba(255, 255, 255, 0.1)');
 
         const labels = forecastData.map(item => {
             const date = new Date(item.timestamp);
@@ -29,10 +58,10 @@ export class ForecastChart {
 
         // Color points based on score
         const pointColors = scores.map(score => {
-            if (score >= 80) return 'rgba(129, 201, 149, 1)'; // Green
-            if (score >= 60) return 'rgba(138, 180, 248, 1)'; // Blue
-            if (score >= 40) return 'rgba(253, 214, 99, 1)'; // Yellow
-            return 'rgba(242, 139, 130, 1)'; // Red
+            if (score >= 80) return colorStatusExcellent;
+            if (score >= 60) return colorStatusGood;
+            if (score >= 40) return colorStatusFair;
+            return colorStatusPoor;
         });
 
         this.chart = new Chart(this.canvas, {
@@ -42,8 +71,8 @@ export class ForecastChart {
                 datasets: [{
                     label: 'Visibility Score',
                     data: scores,
-                    borderColor: 'rgba(138, 180, 248, 1)',
-                    backgroundColor: 'rgba(138, 180, 248, 0.1)',
+                    borderColor: colorSeriesLine,
+                    backgroundColor: colorSeriesFill,
                     pointBackgroundColor: pointColors,
                     pointBorderColor: pointColors,
                     pointRadius: 4,
@@ -71,21 +100,27 @@ export class ForecastChart {
                     y: {
                         beginAtZero: true,
                         max: 100,
+                        border: {
+                            color: colorAxisBorder
+                        },
                         ticks: {
-                            color: '#9aa0a6'
+                            color: colorTickText
                         },
                         grid: {
-                            color: 'rgba(154, 160, 166, 0.1)'
+                            color: colorGrid
                         }
                     },
                     x: {
+                        border: {
+                            color: colorAxisBorder
+                        },
                         ticks: {
-                            color: '#9aa0a6',
+                            color: colorTickText,
                             maxRotation: 45,
                             minRotation: 45
                         },
                         grid: {
-                            color: 'rgba(154, 160, 166, 0.1)'
+                            color: colorGrid
                         }
                     }
                 }
