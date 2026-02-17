@@ -193,12 +193,6 @@ button.btn-save:disabled {
     opacity: 0.6;
 }
 
-/* Settings Trigger Button (in Header) */
-.settings-btn {
-    /* ... (rest of styles for header button) */
-}
-}
-
 /* Map specific override */
 #map {
     height: 300px;
