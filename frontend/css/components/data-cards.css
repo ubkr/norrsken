@@ -27,14 +27,14 @@
 .source-section {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-xs);
 }
 
 .source-divider {
     border: 0;
     height: 1px;
     background: var(--border-color);
-    margin: var(--space-lg) 0;
+    margin: var(--space-sm) 0;
 }
 
 .source-tag {
@@ -55,7 +55,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-xs) 0;
+    padding: var(--space-2xs) 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.02);
 }
 
@@ -106,4 +106,63 @@
     font-style: italic;
     text-align: center;
     padding: var(--space-xl);
+}
+
+/* ── Weather Comparison Grid ─────────────────────────────── */
+.weather-grid {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    column-gap: var(--space-md);
+    row-gap: 0;
+    align-items: center;
+    width: 100%;
+}
+
+.weather-grid--single {
+    grid-template-columns: 1fr auto;
+}
+
+.wg-head {
+    justify-self: end;
+    margin-bottom: var(--space-xs);
+    white-space: nowrap;
+}
+
+.wg-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    padding: var(--space-2xs) 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.wg-label svg {
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.wg-value {
+    justify-self: end;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    padding: var(--space-2xs) 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Remove bottom border from last row (3 columns: label + 2 values) */
+.weather-grid:not(.weather-grid--single) > .wg-label:nth-last-child(3),
+.weather-grid:not(.weather-grid--single) > .wg-value:nth-last-child(-n+2) {
+    border-bottom: none;
+}
+
+/* Remove bottom border from last row (2 columns: label + 1 value) */
+.weather-grid--single > .wg-label:nth-last-child(2),
+.weather-grid--single > .wg-value:last-child {
+    border-bottom: none;
 }

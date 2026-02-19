@@ -101,7 +101,6 @@ export class AuroraDisplay {
                         <span class="kp-badge ${kpInterpretation.class}">${kpInterpretation.level}</span>
                     </span>
                 </div>
-                <div class="kp-description">${kpInterpretation.description}</div>
         `;
 
         if (probability !== null) {
