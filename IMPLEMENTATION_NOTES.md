@@ -2,48 +2,70 @@
 
 ## Implementation Status
 
-The Aurora Visibility Prediction application has been successfully implemented with the following components:
+This project is implemented as a Python FastAPI backend with a vanilla JavaScript/HTML/CSS frontend.
 
-### ✅ Completed Features
+### Completed Features
 
-1. **Backend (Python FastAPI)**
-   - Complete REST API with all planned endpoints
-   - Multi-source data aggregation with fallback logic
-   - Visibility scoring algorithm (0-100 scale)
-   - In-memory caching with TTL
-   - Geographic utilities with bilinear interpolation
-   - Comprehensive error handling and logging
+1. **Backend (FastAPI)**
+    - REST API endpoints:
+       - `/api/v1/prediction/current` (supports optional `lat` and `lon` query parameters)
+       - `/api/v1/prediction/forecast`
+       - `/api/v1/aurora/sources`
+       - `/api/v1/weather/sources`
+       - `/api/v1/health`
+    - Multi-source aggregation with fallback logic
+    - In-memory caching:
+       - Aurora TTL: 5 minutes
+       - Weather TTL: 30 minutes
+    - Correlation and visibility scoring pipeline
+    - NOAA grid interpolation using bilinear interpolation
 
-2. **Frontend (HTML/CSS/JavaScript)**
-   - Responsive UI with dark theme
-   - Real-time visibility score display
-   - Breakdown of score components with progress bars
-   - Data source comparison view
-   - 24-hour forecast chart using Chart.js
-   - Auto-refresh every 5 minutes
+2. **Frontend (Vanilla JS/HTML/CSS)**
+    - Dark-themed responsive UI
+    - Visibility score card and source data cards
+    - 24-hour forecast chart (Chart.js)
+    - Auto-refresh every 5 minutes
+    - Location picker flow:
+       - `settings-modal.js`
+       - `map-selector.js` (Leaflet)
+       - `location-manager.js` (including reverse geocoding and warning when outside Sweden)
+    - Reusable tooltips component (`tooltip.js`)
+    - Modular CSS structure:
+       - `css/tokens.css`
+       - `css/base.css`
+       - `css/layout.css`
+       - `css/main.css`
+       - `css/components/score.css`
+       - `css/components/data-cards.css`
+       - `css/components/chart.css`
+       - `css/components/modal.css`
 
 3. **Testing**
-   - Unit tests for correlation algorithm (11 tests, all passing)
-   - Unit tests for geographic utilities
-   - Live API integration testing script
+    - Unit tests:
+       - `backend/tests/test_correlation.py` (11 tests)
+       - `backend/tests/test_geo.py`
+       - `backend/tests/test_metno_client.py`
+    - Live API test script:
+       - `test_live_apis.py`
 
-### 🔄 Data Source Status
+## Data Source Status
 
-**Working Sources:**
-- ✅ **NOAA SWPC** (Aurora) - Primary aurora data source
-- ✅ **Open-Meteo** (Weather) - Primary weather data source (promoted from secondary)
+### Aurora Sources (in fallback order)
+1. NOAA SWPC (primary)
+2. Auroras.live (secondary)
+3. Aurora Space (tertiary)
 
-**Currently Unavailable:**
-- ⚠️ **SMHI** (Weather) - API appears to have changed or is unavailable (returns HTML instead of JSON)
-- ⚠️ **Auroras.live** (Aurora) - API returning 500 errors
-- ⚠️ **Aurora Space** (Aurora) - Not tested due to other sources working
+### Weather Sources (in fallback order)
+1. Met.no (primary)
+2. SMHI (secondary)
+3. Open-Meteo (tertiary)
 
-**System Behavior:**
-The application is designed with fallback logic, so if primary sources fail, it automatically uses secondary sources. Currently working with:
-- NOAA SWPC for aurora data
-- Open-Meteo for weather data
-
-This provides reliable predictions despite some sources being temporarily unavailable.
+### Current Operational Status
+- NOAA SWPC: working
+- Met.no: working
+- Auroras.live: returning HTTP 500 errors
+- SMHI: returning HTML instead of expected JSON
+- Aurora Space: present as tertiary fallback, not verified
 
 ## Quick Start
 
@@ -63,113 +85,135 @@ pip install -r requirements.txt
 ```
 
 Or manually:
+
 ```bash
 cd backend
 source venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-API available at:
+Backend URLs:
 - http://localhost:8000
-- Docs: http://localhost:8000/docs
+- http://localhost:8000/docs
 
 ### 3. Start Frontend
 
-In a new terminal:
 ```bash
 ./start-frontend.sh
 ```
 
 Or manually:
+
 ```bash
 cd frontend
 python3 -m http.server 3000
 ```
 
-Visit http://localhost:3000
+Frontend URL:
+- http://localhost:3000
 
 ## Testing
 
 ### Run Unit Tests
+
 ```bash
 cd backend
 source venv/bin/activate
 PYTHONPATH=/Users/bjarne/project/norrsken/backend pytest tests/ -v
 ```
 
-### Test Live API Connections
+### Run Live API Test Script
+
 ```bash
 source backend/venv/bin/activate
 python3 test_live_apis.py
 ```
 
 ### Test API Endpoints
+
 ```bash
 # Health check
 curl http://localhost:8000/api/v1/health
 
 # Current prediction
-curl http://localhost:8000/api/v1/prediction/current | python3 -m json.tool
+curl "http://localhost:8000/api/v1/prediction/current" | python3 -m json.tool
 
-# 24-hour forecast
-curl http://localhost:8000/api/v1/prediction/forecast?hours=24 | python3 -m json.tool
+# Current prediction for custom location
+curl "http://localhost:8000/api/v1/prediction/current?lat=55.7&lon=13.4" | python3 -m json.tool
 
-# Aurora sources
+# Forecast
+curl "http://localhost:8000/api/v1/prediction/forecast?hours=24" | python3 -m json.tool
+
+# Aurora source status
 curl http://localhost:8000/api/v1/aurora/sources | python3 -m json.tool
 
-# Weather sources
+# Weather source status
 curl http://localhost:8000/api/v1/weather/sources | python3 -m json.tool
 ```
 
 ## Project Structure
 
-```
+```text
 norrsken/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                    # FastAPI app
-│   │   ├── config.py                  # Settings
-│   │   ├── models/                    # Pydantic models
+│   │   ├── main.py
+│   │   ├── config.py
+│   │   ├── models/
 │   │   │   ├── aurora.py
 │   │   │   ├── weather.py
 │   │   │   └── prediction.py
-│   │   ├── services/                  # Business logic
-│   │   │   ├── aurora/                # Aurora clients
+│   │   ├── services/
+│   │   │   ├── aurora/
 │   │   │   │   ├── base.py
 │   │   │   │   ├── noaa_client.py
 │   │   │   │   ├── auroras_live.py
 │   │   │   │   └── aurora_space.py
-│   │   │   ├── weather/               # Weather clients
+│   │   │   ├── weather/
 │   │   │   │   ├── base.py
+│   │   │   │   ├── metno_client.py
 │   │   │   │   ├── smhi_client.py
 │   │   │   │   └── openmeteo_client.py
-│   │   │   ├── correlation.py         # Scoring algorithm
-│   │   │   ├── cache_service.py       # Caching
-│   │   │   └── aggregator.py          # Multi-source logic
-│   │   ├── api/routes/                # API endpoints
+│   │   │   ├── correlation.py
+│   │   │   ├── cache_service.py
+│   │   │   └── aggregator.py
+│   │   ├── api/routes/
 │   │   │   ├── health.py
 │   │   │   ├── prediction.py
 │   │   │   ├── aurora.py
 │   │   │   └── weather.py
-│   │   └── utils/                     # Utilities
-│   │       ├── geo.py                 # Geographic functions
+│   │   └── utils/
+│   │       ├── geo.py
 │   │       └── logger.py
-│   ├── tests/                         # Unit tests
+│   ├── tests/
 │   │   ├── test_correlation.py
-│   │   └── test_geo.py
-│   ├── requirements.txt
-│   └── venv/
+│   │   ├── test_geo.py
+│   │   └── test_metno_client.py
+│   └── requirements.txt
 ├── frontend/
 │   ├── index.html
-│   ├── css/main.css
+│   ├── css/
+│   │   ├── main.css
+│   │   ├── tokens.css
+│   │   ├── base.css
+│   │   ├── layout.css
+│   │   └── components/
+│   │       ├── score.css
+│   │       ├── data-cards.css
+│   │       ├── chart.css
+│   │       └── modal.css
 │   └── js/
 │       ├── main.js
 │       ├── api.js
+│       ├── location-manager.js
 │       └── components/
 │           ├── visibility-score.js
 │           ├── aurora-display.js
 │           ├── weather-display.js
-│           └── forecast-chart.js
+│           ├── forecast-chart.js
+│           ├── settings-modal.js
+│           ├── map-selector.js
+│           └── tooltip.js
 ├── start-backend.sh
 ├── start-frontend.sh
 ├── test_live_apis.py
@@ -178,70 +222,41 @@ norrsken/
 └── .env
 ```
 
-## Current Visibility Score Example
+## Known Issues
 
-Based on live data (2026-02-01):
-- **Total Score: 31.7/100** - Poor conditions
-- Aurora: 1.7/40 (KP index: 0.5 - too low)
-- Clouds: 0/30 (100% cloud cover)
-- Visibility: 20/20 (60.8km - excellent)
-- Precipitation: 10/10 (no precipitation)
-
-**Recommendation:** "Poor conditions. Aurora activity too low for this latitude."
-
-This is realistic for Södra Sandby (55.7°N) which needs KP ≥ 3-4 for aurora visibility.
-
-## Known Issues & Future Work
-
-### API Availability
-- SMHI API appears to have changed structure or requires different authentication
-- Auroras.live API is experiencing server errors
-- Consider adding alternative Swedish weather sources (e.g., YR.no, Met.no)
-
-### Enhancements for Future Versions
-- Push notifications when visibility score > 80
-- Historical data tracking and trends
-- Multiple locations in Sweden
-- Progressive Web App (PWA) for mobile
-- User-submitted aurora sighting reports
-- Moon phase consideration in scoring
-- Local webcam integration
-- Email/SMS alerts
-- Dark sky map overlay
-- Social sharing features
+- SMHI client currently receives HTML instead of expected JSON responses.
+- Auroras.live currently returns HTTP 500 responses.
 
 ## Key Implementation Details
 
-### NOAA Grid Interpolation
-The NOAA SWPC API returns a flat array of [longitude, latitude, aurora_value] coordinates. The implementation:
-1. Builds a 2D grid (181 latitudes × 360 longitudes)
-2. Uses bilinear interpolation for exact coordinates
-3. Estimates KP index from aurora probability
-
 ### Visibility Scoring
-The scoring algorithm uses a weighted sum:
-- 40% Aurora activity (KP index)
-- 30% Cloud cover
-- 20% Visibility distance
-- 10% Precipitation
 
-Thresholds are calibrated for southern Sweden's latitude (55.7°N).
+The visibility score is calculated on a 0-100 scale using weighted components:
+- 40% aurora activity (KP/aurora strength)
+- 30% cloud cover
+- 20% visibility distance
+- 10% precipitation
 
-### Caching Strategy
-- Aurora data: 5-minute TTL (frequent updates)
-- Weather data: 30-minute TTL (slower changes)
-- In-memory cache for development
-- Can be replaced with Redis for production
+The weighting is calibrated for latitude 55.7°N (Södra Sandby area).
 
-### Error Handling
-- Each data source wrapped in try/catch
-- Automatic fallback to secondary sources
-- Cache returns last good value if all sources fail
-- Detailed logging for debugging
+### NOAA Grid Interpolation
+
+NOAA SWPC aurora grid data is interpolated with bilinear interpolation to estimate values at exact coordinates.
+
+### Aggregation and Caching
+
+- Aurora and weather data are fetched through source-priority fallback chains.
+- Cached values are reused according to configured TTLs (aurora: 300s, weather: 1800s).
+
+### Forecast Endpoint Limitation
+
+`/api/v1/prediction/forecast` currently generates synthetic hourly data derived from the current snapshot with hour-based variation.
+It does not fetch true hourly forecast data from external API sources.
 
 ## Configuration
 
-All settings in `.env`:
+Current `.env` values:
+
 ```bash
 LOCATION_LAT=55.7
 LOCATION_LON=13.4
@@ -251,6 +266,15 @@ CACHE_TTL_WEATHER=1800
 LOG_LEVEL=info
 ```
 
-## License
+## Planned Features
 
-MIT
+- Push notifications when visibility score > 80
+- Historical data tracking and trends
+- Progressive Web App (PWA) for mobile
+- User-submitted aurora sighting reports
+- Moon phase consideration in scoring
+- Local webcam integration
+- Email/SMS alerts
+- Dark sky map overlay
+- Social sharing features
+- True hourly forecast data from API sources (replace synthetic forecast)
