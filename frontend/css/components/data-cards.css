@@ -71,6 +71,13 @@
     gap: var(--space-xs);
 }
 
+.data-label svg {
+    vertical-align: middle;
+    margin-right: 6px;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
 .data-value {
     color: var(--color-text-primary);
     font-weight: 600;
@@ -90,8 +97,8 @@
 .kp-very-high { color: var(--color-metric-aurora); border-color: var(--color-metric-aurora); }
 .kp-high { color: var(--color-status-excellent); border-color: var(--color-status-excellent); }
 .kp-moderate { color: var(--color-status-good); border-color: var(--color-status-good); }
-.kp-low { color: var(--color-status-fair); border-color: var(--color-status-fair); }
-.kp-very-low { color: var(--color-status-poor); border-color: var(--color-status-poor); }
+.kp-low { color: rgba(255, 248, 240, 0.6); border-color: rgba(255, 248, 240, 0.4); }
+.kp-very-low { color: rgba(255, 255, 255, 0.4); border-color: rgba(255, 255, 255, 0.2); }
 
 /* Loading State */
 .loading {

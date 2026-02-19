@@ -2,7 +2,7 @@
 name: Orchestrator
 description: Sonnet, Codex, Gemini
 model: Claude Sonnet 4.6 (copilot)
-tools: ['read/readFile', 'agent', 'memory']
+tools: [vscode/askQuestions, read/readFile, agent/runSubagent, memory]
 ---
 
 <!-- Note: Memory is experimental at the moment. You'll need to be in VS Code Insiders and toggle on memory in settings -->
@@ -16,6 +16,7 @@ These are the only agents you can call. Each has a specific role:
 - **Planner** — Creates implementation strategies and technical plans
 - **Coder** — Writes code, fixes bugs, implements logic
 - **Designer** — Creates UI/UX, styling, visual design
+- **Reviewer** — Reviews code for quality, maintainability, and standards
 
 ## Execution Model
 

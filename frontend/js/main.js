@@ -23,6 +23,7 @@ class App {
         this.lastUpdateEl = document.getElementById('lastUpdate');
         this.locationDisplayEl = document.getElementById('locationDisplay');
         this.refreshInterval = 5 * 60 * 1000; // 5 minutes
+        this.lastSuccessfulLoad = null;
     }
 
     /**
@@ -53,6 +54,7 @@ class App {
 
         // Set up auto-refresh
         setInterval(() => this.loadData(), this.refreshInterval);
+        setInterval(() => this.checkDataFreshness(), 60 * 1000);
 
         console.log('App initialized. Auto-refresh every 5 minutes.');
     }
@@ -86,6 +88,9 @@ class App {
             console.log('Forecast data:', forecast);
             this.forecastChart.update(forecast.forecast);
 
+            this.lastSuccessfulLoad = Date.now();
+            this.checkDataFreshness();
+
             console.log('Data loaded successfully.');
 
         } catch (error) {
@@ -104,6 +109,23 @@ class App {
             minute: '2-digit',
             second: '2-digit'
         });
+    }
+
+    /**
+     * Check whether loaded data is stale and update timestamp indicator
+     */
+    checkDataFreshness() {
+        if (!this.lastUpdateEl) return;
+
+        const isStale = this.lastSuccessfulLoad && (Date.now() - this.lastSuccessfulLoad > 10 * 60 * 1000);
+
+        if (isStale) {
+            this.lastUpdateEl.classList.add('stale-data');
+            this.lastUpdateEl.setAttribute('data-stale', 'true');
+        } else {
+            this.lastUpdateEl.classList.remove('stale-data');
+            this.lastUpdateEl.removeAttribute('data-stale');
+        }
     }
 
     /**

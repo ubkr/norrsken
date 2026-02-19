@@ -35,12 +35,14 @@
 }
 
 .score-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-size: 6rem;
     font-weight: 800;
     line-height: 1;
-    background: linear-gradient(135deg, #fff 0%, var(--color-accent-primary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--color-text-primary);
     filter: drop-shadow(0 0 15px rgba(0, 255, 200, 0.3));
     font-family: var(--font-family-base);
     letter-spacing: -0.05em;
@@ -66,6 +68,46 @@
     color: var(--color-text-primary);
     backdrop-filter: blur(4px);
 }
+
+/* Score Ring */
+.score-ring-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto;
+}
+
+.score-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: rotate(-90deg);
+}
+
+.score-ring-track {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.06);
+    stroke-width: 8;
+}
+
+.score-ring-fill {
+    fill: none;
+    stroke: var(--color-accent-primary);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 326.73; /* 2π × 52 */
+    stroke-dashoffset: 326.73; /* starts empty, JS sets this */
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease;
+}
+
+/* Ring color follows score status */
+.score-excellent .score-ring-fill { stroke: var(--color-status-excellent); }
+.score-good .score-ring-fill      { stroke: var(--color-status-good); }
+.score-fair .score-ring-fill      { stroke: var(--color-status-fair); }
+.score-poor .score-ring-fill      { stroke: var(--color-status-poor); }
 
 /* Breakdown List */
 .score-breakdown {
@@ -140,7 +182,7 @@
 
 /* Progress Bars */
 .progress-track {
-    height: 6px;
+    height: 8px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-full);
     overflow: hidden;

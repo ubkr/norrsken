@@ -27,7 +27,13 @@
             <!-- Visibility Score Card -->
             <section class="score-card score-section" id="scoreCard">
                 <div class="score-display">
-                    <div class="score-value" id="scoreValue">--</div>
+                    <div class="score-ring-container">
+                        <svg class="score-ring" viewBox="0 0 120 120" width="180" height="180" aria-hidden="true">
+                            <circle class="score-ring-track" cx="60" cy="60" r="52"/>
+                            <circle class="score-ring-fill" id="scoreRingFill" cx="60" cy="60" r="52"/>
+                        </svg>
+                        <div class="score-value" id="scoreValue">--</div>
+                    </div>
                     <div class="score-label">Visibility Score</div>
                     <div class="recommendation-pill" id="recommendation">Loading...</div>
                 </div>

@@ -96,3 +96,13 @@ button {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--color-text-muted);
 }
+
+/* Stale data indicator */
+#lastUpdate[data-stale="true"] {
+    color: var(--color-status-fair, #f59e0b);
+}
+
+#lastUpdate[data-stale="true"]::after {
+    content: ' ⚠';
+    font-size: 0.85em;
+}

@@ -5,6 +5,7 @@
 export class VisibilityScoreDisplay {
     constructor() {
         this.scoreValueEl = document.getElementById('scoreValue');
+        this.scoreRingEl = document.getElementById('scoreRingFill');
         this.recommendationEl = document.getElementById('recommendation');
         this.scoreCardEl = document.getElementById('scoreCard');
 
@@ -28,6 +29,12 @@ export class VisibilityScoreDisplay {
 
         // Update total score
         this.scoreValueEl.textContent = Math.round(total_score);
+
+        if (this.scoreRingEl) {
+            const circumference = 326.73;
+            const offset = circumference - (total_score / 100) * circumference;
+            this.scoreRingEl.style.strokeDashoffset = offset;
+        }
 
         // Update recommendation
         this.recommendationEl.textContent = recommendation;

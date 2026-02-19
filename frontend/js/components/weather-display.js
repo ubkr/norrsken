@@ -52,15 +52,15 @@ export class WeatherDisplay {
             <div class="source-section">
                 <span class="source-tag">${label}: ${this.formatSourceName(name)}</span>
                 <div class="data-item">
-                    <span class="data-label">Cloud Cover</span>
+                    <span class="data-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>Cloud Cover</span>
                     <span class="data-value">${cloud_cover.toFixed(1)}%</span>
                 </div>
                 <div class="data-item">
-                    <span class="data-label">Visibility</span>
+                    <span class="data-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Visibility</span>
                     <span class="data-value">${visibility_km.toFixed(1)} km</span>
                 </div>
                 <div class="data-item">
-                    <span class="data-label">Precipitation</span>
+                    <span class="data-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>Precipitation</span>
                     <span class="data-value">${precipitation_mm.toFixed(1)} mm</span>
                 </div>
         `;
@@ -68,7 +68,7 @@ export class WeatherDisplay {
         if (temperature_c !== null) {
             html += `
                 <div class="data-item">
-                    <span class="data-label">Temperature</span>
+                    <span class="data-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>Temperature</span>
                     <span class="data-value">${temperature_c.toFixed(1)}°C</span>
                 </div>
             `;
@@ -76,7 +76,7 @@ export class WeatherDisplay {
 
         html += `
                 <div class="data-item">
-                    <span class="data-label">Updated</span>
+                    <span class="data-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Updated</span>
                     <span class="data-value">${updateTime}</span>
                 </div>
             </div>

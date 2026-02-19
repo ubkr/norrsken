@@ -34,7 +34,9 @@ class SMHIClient(WeatherSourceBase):
         """
         try:
             # Build URL
-            url = f"{self.BASE_URL}/geotype/point/lon/{lon}/lat/{lat}/data.json"
+            lat_r = round(lat, 4)
+            lon_r = round(lon, 4)
+            url = f"{self.BASE_URL}/geotype/point/lon/{lon_r}/lat/{lat_r}/data.json"
 
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.get(url)

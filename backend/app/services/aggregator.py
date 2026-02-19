@@ -4,7 +4,6 @@ from ..models.aurora import AuroraData, AuroraResponse
 from ..models.weather import WeatherData, WeatherResponse
 from .aurora.noaa_client import NOAAClient
 from .aurora.auroras_live import AurorasLiveClient
-from .aurora.aurora_space import AuroraSpaceClient
 from .weather.metno_client import MetNoClient
 from .weather.smhi_client import SMHIClient
 from .weather.openmeteo_client import OpenMeteoClient
@@ -22,8 +21,7 @@ class DataAggregator:
         # Initialize aurora clients
         self.aurora_clients = [
             NOAAClient(),
-            AurorasLiveClient(),
-            AuroraSpaceClient()
+            AurorasLiveClient()
         ]
 
         # Initialize weather clients
