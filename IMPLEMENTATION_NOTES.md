@@ -9,10 +9,11 @@ This project is implemented as a Python FastAPI backend with a vanilla JavaScrip
 1. **Backend (FastAPI)**
     - REST API endpoints:
        - `/api/v1/prediction/current` (supports optional `lat` and `lon` query parameters)
-       - `/api/v1/prediction/forecast`
-       - `/api/v1/aurora/sources`
-       - `/api/v1/weather/sources`
+       - `/api/v1/prediction/forecast` (supports optional `lat` and `lon` query parameters)
+       - `/api/v1/aurora/sources` (supports optional `lat` and `lon` query parameters)
+       - `/api/v1/weather/sources` (supports optional `lat` and `lon` query parameters)
        - `/api/v1/health`
+    - Latitude and longitude are provided as a pair for coordinate-aware requests. Supplying only one returns HTTP 422.
     - Multi-source aggregation with fallback logic
     - In-memory caching:
        - Aurora TTL: 5 minutes
@@ -28,7 +29,13 @@ This project is implemented as a Python FastAPI backend with a vanilla JavaScrip
     - Location picker flow:
        - `settings-modal.js`
        - `map-selector.js` (Leaflet)
-       - `location-manager.js` (including reverse geocoding and warning when outside Sweden)
+       - `location-manager.js` (reverse geocoding, warning when outside Sweden, and persistence in browser `localStorage` under `aurora_location`)
+    - `location-manager.js` localStorage handling includes:
+       - availability detection before use
+       - try/catch protection for read/write/remove operations
+       - strict ISO-8601 timestamp validation for stored entries
+       - automatic discard of entries older than 30 days
+    - `api.js` sends the selected user coordinates to all backend data calls (`prediction/current`, `prediction/forecast`, `aurora/sources`, `weather/sources`)
     - Reusable tooltips component (`tooltip.js`)
     - Modular CSS structure:
        - `css/tokens.css`
@@ -144,11 +151,20 @@ curl "http://localhost:8000/api/v1/prediction/current?lat=55.7&lon=13.4" | pytho
 # Forecast
 curl "http://localhost:8000/api/v1/prediction/forecast?hours=24" | python3 -m json.tool
 
+# Forecast for custom location
+curl "http://localhost:8000/api/v1/prediction/forecast?hours=24&lat=55.7&lon=13.4" | python3 -m json.tool
+
 # Aurora source status
 curl http://localhost:8000/api/v1/aurora/sources | python3 -m json.tool
 
+# Aurora source status for custom location
+curl "http://localhost:8000/api/v1/aurora/sources?lat=55.7&lon=13.4" | python3 -m json.tool
+
 # Weather source status
 curl http://localhost:8000/api/v1/weather/sources | python3 -m json.tool
+
+# Weather source status for custom location
+curl "http://localhost:8000/api/v1/weather/sources?lat=55.7&lon=13.4" | python3 -m json.tool
 ```
 
 ## Project Structure
@@ -248,9 +264,16 @@ NOAA SWPC aurora grid data is interpolated with bilinear interpolation to estima
 - Aurora and weather data are fetched through source-priority fallback chains.
 - Cached values are reused according to configured TTLs (aurora: 300s, weather: 1800s).
 
+### Multi-user and Stateless Design
+
+The backend holds no per-user session state for location preferences.
+Each browser stores its chosen location in localStorage (`aurora_location`) and includes coordinates in API requests.
+Multiple simultaneous users with different selected locations are supported because the server processes each request with that request's coordinates.
+The environment-configured location (`LOCATION_LAT`, `LOCATION_LON`, `LOCATION_NAME`) is used as a default fallback when coordinates are not provided.
+
 ### Forecast Endpoint Limitation
 
-`/api/v1/prediction/forecast` currently generates synthetic hourly data derived from the current snapshot with hour-based variation.
+`/api/v1/prediction/forecast` generates synthetic hourly data derived from the current snapshot with hour-based variation.
 It does not fetch true hourly forecast data from external API sources.
 
 ## Configuration

@@ -16,17 +16,102 @@ const SWEDEN_BOUNDS = {
 };
 
 const STORAGE_KEY = 'aurora_location';
+const MAX_LOCATION_AGE_DAYS = 30;
+const MAX_LOCATION_AGE_MS = MAX_LOCATION_AGE_DAYS * 24 * 60 * 60 * 1000;
+const ISO_8601_TIMESTAMP_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 
 export class LocationManager {
     constructor() {
+        this.storageAvailable = this.isStorageAvailable();
         this.currentLocation = this.loadLocation();
     }
 
     /**
-     * Get current location (from storage or default)
+     * Get current location (from storage or in-memory fallback)
+     */
+    getCurrentLocation() {
+        const loadedLocation = this.loadLocation();
+        this.currentLocation = loadedLocation;
+        return { ...loadedLocation };
+    }
+
+    /**
+     * Get current location (backward-compatible alias)
      */
     getLocation() {
-        return { ...this.currentLocation };
+        return this.getCurrentLocation();
+    }
+
+    /**
+     * Check localStorage availability
+     */
+    isStorageAvailable() {
+        try {
+            const testKey = '__aurora_storage_test__';
+            localStorage.setItem(testKey, testKey);
+            localStorage.removeItem(testKey);
+            return true;
+        } catch (error) {
+            console.warn('localStorage is unavailable, using in-memory location only:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Read raw location payload from localStorage safely
+     */
+    readStoredLocation() {
+        if (!this.storageAvailable) {
+            return null;
+        }
+
+        try {
+            return localStorage.getItem(STORAGE_KEY);
+        } catch (error) {
+            console.error('Failed to read location from localStorage:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Write location payload to localStorage safely
+     */
+    writeStoredLocation(location) {
+        if (!this.storageAvailable) {
+            return false;
+        }
+
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(location));
+            return true;
+        } catch (error) {
+            console.error('Failed to save location to localStorage:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Remove location payload from localStorage safely
+     */
+    removeStoredLocation() {
+        if (!this.storageAvailable) {
+            return true;
+        }
+
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+            return true;
+        } catch (error) {
+            console.error('Failed to clear location from localStorage:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Build default location payload
+     */
+    createDefaultLocation() {
+        return { ...DEFAULT_LOCATION };
     }
 
     /**
@@ -45,63 +130,65 @@ export class LocationManager {
             timestamp: new Date().toISOString()
         };
 
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(location));
-            this.currentLocation = location;
+        const saved = this.writeStoredLocation(location);
+        this.currentLocation = location;
 
-            // Emit custom event for location change
-            window.dispatchEvent(new CustomEvent('locationChanged', {
-                detail: location
-            }));
+        // Emit custom event for location change
+        window.dispatchEvent(new CustomEvent('locationChanged', {
+            detail: location
+        }));
 
-            return true;
-        } catch (error) {
-            console.error('Failed to save location to localStorage:', error);
-            return false;
-        }
+        return saved;
     }
 
     /**
      * Clear saved location and revert to default
      */
     clearLocation() {
-        try {
-            localStorage.removeItem(STORAGE_KEY);
-            this.currentLocation = { ...DEFAULT_LOCATION };
+        const cleared = this.removeStoredLocation();
+        this.currentLocation = { ...DEFAULT_LOCATION };
 
-            window.dispatchEvent(new CustomEvent('locationChanged', {
-                detail: this.currentLocation
-            }));
+        window.dispatchEvent(new CustomEvent('locationChanged', {
+            detail: this.currentLocation
+        }));
 
-            return true;
-        } catch (error) {
-            console.error('Failed to clear location:', error);
-            return false;
-        }
+        return cleared;
     }
 
     /**
      * Load location from localStorage or return default
      */
     loadLocation() {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (!stored) {
-                return { ...DEFAULT_LOCATION };
-            }
+        if (!this.storageAvailable) {
+            return this.currentLocation ? { ...this.currentLocation } : this.createDefaultLocation();
+        }
 
+        const stored = this.readStoredLocation();
+        if (!stored) {
+            return this.createDefaultLocation();
+        }
+
+        try {
             const location = JSON.parse(stored);
 
             // Validate structure
             if (!this.isValidLocation(location)) {
                 console.warn('Invalid location data in localStorage, using default');
-                return { ...DEFAULT_LOCATION };
+                this.removeStoredLocation();
+                return this.createDefaultLocation();
+            }
+
+            if (this.isLocationStale(location.timestamp)) {
+                console.warn(`Stored location is older than ${MAX_LOCATION_AGE_DAYS} days, using default`);
+                this.removeStoredLocation();
+                return this.createDefaultLocation();
             }
 
             return location;
         } catch (error) {
             console.error('Failed to load location from localStorage:', error);
-            return { ...DEFAULT_LOCATION };
+            this.removeStoredLocation();
+            return this.createDefaultLocation();
         }
     }
 
@@ -109,12 +196,31 @@ export class LocationManager {
      * Check if location data has valid structure
      */
     isValidLocation(location) {
+        const timestampValid =
+            typeof location.timestamp === 'string' &&
+            ISO_8601_TIMESTAMP_REGEX.test(location.timestamp) &&
+            Number.isFinite(new Date(location.timestamp).getTime());
+
         return location &&
                typeof location.lat === 'number' &&
                typeof location.lon === 'number' &&
                typeof location.name === 'string' &&
+               timestampValid &&
                location.lat >= -90 && location.lat <= 90 &&
                location.lon >= -180 && location.lon <= 180;
+    }
+
+    /**
+     * Check if stored location timestamp is older than max allowed age
+     */
+    isLocationStale(timestamp) {
+        const timestampMs = new Date(timestamp).getTime();
+
+        if (!Number.isFinite(timestampMs)) {
+            return true;
+        }
+
+        return (Date.now() - timestampMs) > MAX_LOCATION_AGE_MS;
     }
 
     /**
