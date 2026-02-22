@@ -1,13 +1,16 @@
 """Tests for visibility scoring algorithm"""
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
+from unittest.mock import patch
 from app.models.aurora import AuroraData
 from app.models.weather import WeatherData
 from app.services.correlation import calculate_visibility_score, get_recommendation
 
 
-def test_excellent_conditions():
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_excellent_conditions(mock_moon):
     """Test excellent aurora viewing conditions"""
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
     aurora = AuroraData(
         source="test",
         kp_index=6.0,
@@ -33,8 +36,10 @@ def test_excellent_conditions():
     assert "excellent" in score.recommendation.lower()
 
 
-def test_poor_conditions_low_kp():
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_poor_conditions_low_kp(mock_moon):
     """Test poor conditions due to low KP index"""
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
     aurora = AuroraData(
         source="test",
         kp_index=1.0,  # Very low
@@ -57,8 +62,10 @@ def test_poor_conditions_low_kp():
     assert "low" in score.recommendation.lower()
 
 
-def test_poor_conditions_heavy_clouds():
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_poor_conditions_heavy_clouds(mock_moon):
     """Test poor conditions due to heavy cloud cover"""
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
     aurora = AuroraData(
         source="test",
         kp_index=5.0,
@@ -80,8 +87,10 @@ def test_poor_conditions_heavy_clouds():
     assert "cloud" in score.recommendation.lower() or score.total_score < 60
 
 
-def test_fair_conditions():
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_fair_conditions(mock_moon):
     """Test fair viewing conditions"""
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
     aurora = AuroraData(
         source="test",
         kp_index=4.0,
@@ -103,8 +112,10 @@ def test_fair_conditions():
     assert score.breakdown.precipitation < 10  # Reduced precip score
 
 
-def test_score_boundaries():
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_score_boundaries(mock_moon):
     """Test that scores stay within bounds"""
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
     aurora = AuroraData(
         source="test",
         kp_index=9.0,  # Maximum
@@ -129,52 +140,56 @@ def test_score_boundaries():
     assert 0 <= score.breakdown.precipitation <= 10
 
 
-def test_recommendation_ranges():
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_recommendation_ranges(mock_moon):
     """Test recommendation generation for different score ranges"""
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
     # Excellent (KP >= 3 required)
-    rec = get_recommendation(85, 5.0, 10.0)
+    rec = get_recommendation(85, 5.0, 10.0, lat=55.7)
     assert "excellent" in rec.lower()
     assert "kp" in rec.lower()
 
     # Good with clear skies
-    rec = get_recommendation(65, 4.0, 30.0)
+    rec = get_recommendation(65, 4.0, 30.0, lat=55.7)
     assert "good" in rec.lower()
     assert "kp" in rec.lower()
 
     # Good with moderate clouds
-    rec = get_recommendation(65, 4.0, 60.0)
+    rec = get_recommendation(65, 4.0, 60.0, lat=55.7)
     assert "cloud" in rec.lower()
     assert "kp" in rec.lower()
 
     # Fair (KP >= 3, marginal weather)
-    rec = get_recommendation(45, 3.5, 50.0)
+    rec = get_recommendation(45, 3.5, 50.0, lat=55.7)
     assert "fair" in rec.lower() or "marginal" in rec.lower()
     assert "kp" in rec.lower()
 
     # Fair with heavy clouds
-    rec = get_recommendation(45, 3.5, 80.0)
+    rec = get_recommendation(45, 3.5, 80.0, lat=55.7)
     assert "cloud" in rec.lower()
     assert "kp" in rec.lower()
 
     # Poor with active aurora
-    rec = get_recommendation(25, 3.5, 70.0)
+    rec = get_recommendation(25, 3.5, 70.0, lat=55.7)
     assert "poor" in rec.lower()
     assert "kp" in rec.lower()
 
     # KP < 3 cases - no outdoor suggestions regardless of score
-    rec = get_recommendation(65, 2.0, 10.0)
+    rec = get_recommendation(65, 2.0, 10.0, lat=55.7)
     assert "too low" in rec.lower()
     assert "get outside" not in rec.lower()
 
-    rec = get_recommendation(45, 2.5, 30.0)
+    rec = get_recommendation(45, 2.5, 30.0, lat=55.7)
     assert "too low" in rec.lower()
 
-    rec = get_recommendation(15, 1.0, 80.0)
+    rec = get_recommendation(15, 1.0, 80.0, lat=55.7)
     assert "too low" in rec.lower()
 
 
-def test_no_outdoor_suggestion_without_aurora():
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_no_outdoor_suggestion_without_aurora(mock_moon):
     """Perfect weather + KP 2.5 should NOT suggest going outside"""
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
     aurora = AuroraData(
         source="test",
         kp_index=2.5,
@@ -197,11 +212,13 @@ def test_no_outdoor_suggestion_without_aurora():
     assert "worth checking" not in score.recommendation.lower()
 
 
-def test_kp_3_is_minimum_threshold():
-    """KP = 3.0 exactly should be treated as sufficient aurora activity"""
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_kp_3_is_minimum_threshold(mock_moon):
+    """KP just above the dynamic threshold should be treated as sufficient aurora activity"""
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
     aurora = AuroraData(
         source="test",
-        kp_index=3.0,
+        kp_index=3.2,
         probability=20.0,
         last_updated=datetime.utcnow()
     )
@@ -218,3 +235,22 @@ def test_kp_3_is_minimum_threshold():
 
     assert "too low" not in score.recommendation.lower()
     assert "active" in score.recommendation.lower() or "possible" in score.recommendation.lower()
+
+
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_moon_penalty_reduces_score(mock_moon):
+    """Moon penalty should reduce total score by penalty_pts."""
+    mock_moon.return_value = {"illumination": 1.0, "elevation_deg": 45.0, "penalty_pts": 10.6}
+    aurora = AuroraData(source="test", kp_index=5.0, last_updated=datetime.now(timezone.utc))
+    weather = WeatherData(
+        source="test",
+        cloud_cover=0.0,
+        visibility_km=30.0,
+        precipitation_mm=0.0,
+        last_updated=datetime.now(timezone.utc),
+    )
+    score = calculate_visibility_score(aurora, weather)
+    # With KP=5 aurora=20.0, cloud=30, vis=20, precip=10 → base=80.0, penalty=10.6 → total=69.4
+    assert score.breakdown.moon.penalty_pts == 10.6
+    assert score.total_score == pytest.approx(69.4, abs=0.5)
+    assert score.total_score <= 80.0  # always less than base

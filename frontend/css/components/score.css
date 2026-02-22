@@ -216,6 +216,9 @@
 .progress-fill.clouds { background: var(--color-metric-clouds); }
 .progress-fill.visibility { background: var(--color-metric-visibility); }
 .progress-fill.precipitation { background: var(--color-metric-precip); }
+.progress-fill.moon-penalty {
+    background-color: #c084fc;
+}
 
 /* Score Status Modifiers (applied via JS) */
 .score-excellent .score-value { color: var(--color-status-excellent); -webkit-text-fill-color: var(--color-status-excellent); }

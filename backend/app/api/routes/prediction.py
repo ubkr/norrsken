@@ -39,7 +39,9 @@ async def get_current_prediction(
         # Calculate visibility score
         visibility_score = calculate_visibility_score(
             aurora_data.primary,
-            weather_data.primary
+            weather_data.primary,
+            lat=lat,
+            lon=lon,
         )
 
         # Build response
@@ -91,7 +93,9 @@ async def get_forecast(
         # Calculate current visibility score
         current_score = calculate_visibility_score(
             aurora_data.primary,
-            weather_data.primary
+            weather_data.primary,
+            lat=lat,
+            lon=lon,
         )
 
         # Generate forecast items

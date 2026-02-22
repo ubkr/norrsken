@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # Location
     location_lat: float = 55.7
     location_lon: float = 13.4
-    location_name: str = "Södra Sandby"
+    location_name: str = "My Location"
 
     # Cache TTL (seconds)
     cache_ttl_aurora: int = 300  # 5 minutes
@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # API settings
     api_title: str = "Aurora Visibility Prediction API"
     api_version: str = "1.0.0"
-    api_description: str = "Predicts aurora borealis visibility in Södra Sandby, Sweden"
+    api_description: str = "Predicts aurora borealis visibility for any location"
 
     # Met.no API
     metno_user_agent: str = "AuroraVisibility/1.0 (contact@example.com)"

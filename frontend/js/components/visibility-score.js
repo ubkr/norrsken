@@ -18,6 +18,8 @@ export class VisibilityScoreDisplay {
         this.visibilityValueEl = document.getElementById('visibilityValue');
         this.precipitationBarEl = document.getElementById('precipitationBar');
         this.precipitationValueEl = document.getElementById('precipitationValue');
+        this.moonPenaltyBarEl = document.getElementById('moonPenaltyBar');
+        this.moonPenaltyValueEl = document.getElementById('moonPenaltyValue');
     }
 
     /**
@@ -47,6 +49,14 @@ export class VisibilityScoreDisplay {
         this.updateBreakdown('clouds', breakdown.clouds, 30);
         this.updateBreakdown('visibility', breakdown.visibility, 20);
         this.updateBreakdown('precipitation', breakdown.precipitation, 10);
+
+        if (breakdown.moon && this.moonPenaltyBarEl && this.moonPenaltyValueEl) {
+            const penalty = breakdown.moon.penalty_pts;
+            const pct = Math.round((penalty / 15) * 100);
+            this.moonPenaltyBarEl.style.width = `${pct}%`;
+            const illuminationPct = Math.round(breakdown.moon.illumination * 100);
+            this.moonPenaltyValueEl.textContent = `-${penalty.toFixed(1)} pts (${illuminationPct}% lit, ${breakdown.moon.elevation_deg.toFixed(0)}° alt)`;
+        }
     }
 
     /**

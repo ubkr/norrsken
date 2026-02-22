@@ -12,12 +12,20 @@ class Location(BaseModel):
     name: str = Field(..., description="Location name")
 
 
+class MoonData(BaseModel):
+    """Moon phase and position data used in visibility scoring."""
+    illumination: float = Field(..., ge=0.0, le=1.0, description="Moon illumination fraction (0=new, 1=full)")
+    elevation_deg: float = Field(..., description="Moon elevation above horizon in degrees")
+    penalty_pts: float = Field(..., ge=0.0, le=15.0, description="Score penalty deducted (0–15 pts)")
+
+
 class VisibilityBreakdown(BaseModel):
     """Breakdown of visibility score components"""
     aurora: float = Field(..., ge=0, le=40, description="Aurora activity score (max 40)")
     clouds: float = Field(..., ge=0, le=30, description="Cloud cover score (max 30)")
     visibility: float = Field(..., ge=0, le=20, description="Visibility score (max 20)")
     precipitation: float = Field(..., ge=0, le=10, description="Precipitation score (max 10)")
+    moon: MoonData
 
 
 class VisibilityScore(BaseModel):

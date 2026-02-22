@@ -1,15 +1,28 @@
 """Visibility scoring algorithm"""
 from ..models.aurora import AuroraData
 from ..models.weather import WeatherData
-from ..models.prediction import VisibilityScore, VisibilityBreakdown
+from ..models.prediction import VisibilityScore, VisibilityBreakdown, MoonData
+from ..utils.moon import calculate_moon_penalty
 
 
-def calculate_visibility_score(aurora: AuroraData, weather: WeatherData) -> VisibilityScore:
+def _min_kp_for_lat(lat: float) -> float:
+    """Return the minimum KP index required for aurora visibility at the given latitude.
+    Uses the approximation that the aurora oval's equatorward boundary is ~65°N at KP=0
+    and moves ~3° south per KP unit."""
+    return max(0.0, (65.0 - abs(lat)) / 3.0)
+
+
+def calculate_visibility_score(
+    aurora: AuroraData,
+    weather: WeatherData,
+    lat: float = 55.7,
+    lon: float = 13.4,
+) -> VisibilityScore:
     """
     Calculate aurora visibility score (0-100) based on aurora activity and weather conditions.
 
     Scoring breakdown:
-    - Aurora activity (40%): KP index scaled (need KP >= 3 for southern Sweden)
+    - Aurora activity (40%): KP index scaled for the given latitude
     - Cloud cover (30%): Less clouds = better visibility
     - Visibility (20%): Higher visibility = better
     - Precipitation (10%): No precipitation = better
@@ -22,14 +35,13 @@ def calculate_visibility_score(aurora: AuroraData, weather: WeatherData) -> Visi
         VisibilityScore with total score, breakdown, and recommendation
     """
     # Aurora activity score (0-40 points)
-    # KP index ranges 0-9; for southern Sweden, KP >= 3 is minimum for visibility
+    # Minimum KP for visibility depends on latitude
+    min_kp = _min_kp_for_lat(lat)
     kp = aurora.kp_index
-    if kp < 3:
-        # Very low aurora activity
-        aurora_score = (kp / 3.0) * 10  # 0-10 points
+    if kp < min_kp:
+        aurora_score = (kp / max(min_kp, 1.0)) * 10  # 0-10 points below threshold
     else:
-        # Good aurora activity, scale 3-9 to 10-40 points
-        aurora_score = 10 + ((kp - 3) / 6.0) * 30
+        aurora_score = 10 + ((kp - min_kp) / max(9.0 - min_kp, 1.0)) * 30
 
     aurora_score = min(40, max(0, aurora_score))
 
@@ -65,60 +77,76 @@ def calculate_visibility_score(aurora: AuroraData, weather: WeatherData) -> Visi
     else:
         precip_score = 0
 
+    moon_data = calculate_moon_penalty(lat, lon)
+
     # Total score
-    total = aurora_score + cloud_score + vis_score + precip_score
+    total_score = max(
+        0.0,
+        round(
+            aurora_score + cloud_score + vis_score + precip_score - moon_data["penalty_pts"],
+            1,
+        ),
+    )
 
     # Generate recommendation
-    recommendation = get_recommendation(total, kp, cloud_pct)
+    recommendation = get_recommendation(total_score, kp, cloud_pct, lat)
 
     return VisibilityScore(
-        total_score=round(total, 1),
+        total_score=total_score,
         breakdown=VisibilityBreakdown(
             aurora=round(aurora_score, 1),
             clouds=round(cloud_score, 1),
             visibility=round(vis_score, 1),
-            precipitation=round(precip_score, 1)
+            precipitation=round(precip_score, 1),
+            moon=MoonData(
+                illumination=moon_data["illumination"],
+                elevation_deg=moon_data["elevation_deg"],
+                penalty_pts=moon_data["penalty_pts"],
+            ),
         ),
         recommendation=recommendation
     )
 
 
-def get_recommendation(score: float, kp_index: float, cloud_cover: float) -> str:
+def get_recommendation(score: float, kp_index: float, cloud_cover: float, lat: float = 55.7) -> str:
     """
     Generate human-readable recommendation based on score and conditions.
 
-    KP >= 3 is required for aurora visibility at Södra Sandby (55.7°N).
-    No outdoor suggestion is made if KP < 3, regardless of weather.
+    Minimum required KP depends on latitude.
+    No outdoor suggestion is made if KP is below the latitude threshold, regardless of weather.
 
     Args:
         score: Total visibility score (0-100)
         kp_index: KP index (0-9)
         cloud_cover: Cloud cover percentage (0-100)
+        lat: Latitude used to compute minimum required KP threshold
 
     Returns:
         Recommendation string
     """
-    if kp_index < 3:
+    min_kp = _min_kp_for_lat(lat)
+
+    if kp_index < min_kp:
         if score >= 60:
-            return "Weather conditions are excellent, but aurora activity is too low for this latitude (KP < 3). Not worth going outside yet - wait for stronger activity."
+            return f"Weather conditions are excellent, but aurora activity is too low for your current location (KP < {min_kp:.1f}). Not worth going outside yet - wait for stronger activity."
         elif score >= 40:
-            return "Aurora activity too low for this latitude (KP < 3). Aurora viewing not possible regardless of weather."
+            return f"Aurora activity too low for your current location (KP < {min_kp:.1f}). Aurora viewing not possible regardless of weather."
         else:
-            return "Aurora activity too low (KP < 3) and weather conditions unfavorable. Aurora viewing not possible."
+            return f"Aurora activity too low (KP < {min_kp:.1f}) and weather conditions unfavorable. Aurora viewing not possible."
 
     if score >= 80:
-        return "Excellent conditions! Aurora is active (KP ≥ 3) and weather is clear. Great chance to see aurora - get outside!"
+        return f"Excellent conditions! Aurora is active (KP ≥ {min_kp:.1f}) and weather is clear. Great chance to see aurora - get outside!"
     elif score >= 60:
         if cloud_cover > 50:
-            return "Good aurora activity (KP ≥ 3), but moderate cloud cover may reduce visibility. Worth checking outside if clouds break."
+            return f"Good aurora activity (KP ≥ {min_kp:.1f}), but moderate cloud cover may reduce visibility. Worth checking outside if clouds break."
         else:
-            return "Good conditions! Aurora is active (KP ≥ 3) and weather is favorable. Worth checking outside."
+            return f"Good conditions! Aurora is active (KP ≥ {min_kp:.1f}) and weather is favorable. Worth checking outside."
     elif score >= 40:
         if cloud_cover > 75:
-            return "Aurora is active (KP ≥ 3), but heavy cloud cover will likely block visibility. Not recommended unless skies clear."
+            return f"Aurora is active (KP ≥ {min_kp:.1f}), but heavy cloud cover will likely block visibility. Not recommended unless skies clear."
         else:
-            return "Fair conditions. Aurora is active (KP ≥ 3) but conditions are marginal. May be visible in dark areas."
+            return f"Fair conditions. Aurora is active (KP ≥ {min_kp:.1f}) but conditions are marginal. May be visible in dark areas."
     elif score >= 20:
-        return "Aurora is active (KP ≥ 3), but weather conditions are poor. Aurora viewing not recommended."
+        return f"Aurora is active (KP ≥ {min_kp:.1f}), but weather conditions are poor. Aurora viewing not recommended."
     else:
         return "Very poor conditions. Aurora viewing not recommended."

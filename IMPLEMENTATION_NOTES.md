@@ -19,6 +19,11 @@ This project is implemented as a Python FastAPI backend with a vanilla JavaScrip
        - Aurora TTL: 5 minutes
        - Weather TTL: 30 minutes
     - Correlation and visibility scoring pipeline
+    - Moon Phase Penalty:
+       - Moon phase penalty incorporated into visibility score using the `ephem` library
+       - Formula: `Moon_Factor = Illumination × max(0, sin(Moon_Elevation))` — deducts 0–15 pts
+       - Location-aware: moon elevation computed for the user's selected coordinates
+       - When moon is below horizon, penalty is 0 regardless of illumination
     - NOAA grid interpolation using bilinear interpolation
 
 2. **Frontend (Vanilla JS/HTML/CSS)**
@@ -238,6 +243,34 @@ norrsken/
 └── .env
 ```
 
+## Scoring Algorithm
+
+The visibility score is a sum of positive components minus a moon penalty, capped 0–100.
+
+### Positive Components (max 100 pts)
+
+| Component     | Max pts | Factor |
+|---------------|---------|--------|
+| Aurora        | 40      | KP index (piecewise: KP<3 → 0–10 pts; KP 3–9 → 10–40 pts) |
+| Cloud cover   | 30      | <25% cloud → 30 pts; 25–50% → 20 pts; 50–75% → 10 pts; ≥75% → 0 pts |
+| Visibility    | 20      | >20 km → 20 pts; >10 km → 15 pts; >5 km → 10 pts; else → 5 pts |
+| Precipitation | 10      | None → 10 pts; <1 mm/h → 5 pts; ≥1 mm/h → 0 pts |
+
+### Moon Phase Penalty (max 15 pts deduction)
+
+Based on Krisciunas & Schaefer (1991) sky-brightness model and common aurora-forecasting practice.
+
+```text
+Moon_Factor  = Illumination_Fraction × max(0, sin(Moon_Elevation_radians))
+penalty_pts  = min(15, round(Moon_Factor × 15, 1))
+Final_Score  = max(0, Component_Sum − penalty_pts)
+```
+
+- **Illumination fraction**: 0 (new moon) → 1 (full moon), computed by `ephem` (Meeus algorithm)
+- **Moon elevation**: real-time altitude for the user's location; negative elevation → 0 penalty
+- **Maximum penalty**: 15 pts, occurs only when full moon is directly overhead
+- **Rationale**: a strong aurora (KP ≥ 7) yields 40 aurora pts; a 15-pt moonlight penalty still leaves a high total, reflecting that very active aurora remains visible under a full moon
+
 ## Known Issues
 
 - SMHI client currently receives HTML instead of expected JSON responses.
@@ -253,7 +286,7 @@ The visibility score is calculated on a 0-100 scale using weighted components:
 - 20% visibility distance
 - 10% precipitation
 
-The weighting is calibrated for latitude 55.7°N (Södra Sandby area).
+The weighting adapts dynamically to the user's selected latitude.
 
 ### NOAA Grid Interpolation
 
@@ -283,7 +316,7 @@ Current `.env` values:
 ```bash
 LOCATION_LAT=55.7
 LOCATION_LON=13.4
-LOCATION_NAME=Södra Sandby
+LOCATION_NAME=Your City
 CACHE_TTL_AURORA=300
 CACHE_TTL_WEATHER=1800
 LOG_LEVEL=info
@@ -295,7 +328,6 @@ LOG_LEVEL=info
 - Historical data tracking and trends
 - Progressive Web App (PWA) for mobile
 - User-submitted aurora sighting reports
-- Moon phase consideration in scoring
 - Local webcam integration
 - Email/SMS alerts
 - Dark sky map overlay
