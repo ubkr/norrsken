@@ -4,7 +4,7 @@
 
 const SWEDEN_CENTER = { lat: 62.0, lon: 15.0 };
 const DEFAULT_ZOOM = 5;
-const NOMINATIM_API = 'https://nominatim.openstreetmap.org/reverse';
+const GEOCODE_API = '/api/v1/geocode/reverse';
 
 export class MapSelector {
     constructor() {
@@ -94,13 +94,9 @@ export class MapSelector {
      */
     async reverseGeocode(lat, lon) {
         try {
-            const url = `${NOMINATIM_API}?lat=${lat}&lon=${lon}&format=json&accept-language=en`;
+            const url = `${GEOCODE_API}?lat=${lat}&lon=${lon}`;
 
-            const response = await fetch(url, {
-                headers: {
-                    'User-Agent': 'AuroraVisibilityApp/1.0'
-                }
-            });
+            const response = await fetch(url);
 
             if (!response.ok) {
                 throw new Error(`Geocoding failed: ${response.status}`);
