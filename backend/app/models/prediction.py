@@ -19,6 +19,13 @@ class MoonData(BaseModel):
     penalty_pts: float = Field(..., ge=0.0, le=15.0, description="Score penalty deducted (0–15 pts)")
 
 
+class SunData(BaseModel):
+    """Sun elevation and twilight phase data used in visibility scoring."""
+    elevation_deg: float = Field(..., description="Sun elevation above horizon in degrees")
+    twilight_phase: str = Field(..., description="Twilight phase: daylight, civil_twilight, nautical_twilight, astronomical_twilight, darkness")
+    penalty_pts: float = Field(..., ge=0.0, le=50.0, description="Score penalty deducted (0–50 pts)")
+
+
 class VisibilityBreakdown(BaseModel):
     """Breakdown of visibility score components"""
     aurora: float = Field(..., ge=0, le=40, description="Aurora activity score (max 40)")
@@ -26,6 +33,7 @@ class VisibilityBreakdown(BaseModel):
     visibility: float = Field(..., ge=0, le=20, description="Visibility score (max 20)")
     precipitation: float = Field(..., ge=0, le=10, description="Precipitation score (max 10)")
     moon: MoonData
+    sun: SunData
 
 
 class VisibilityScore(BaseModel):

@@ -7,10 +7,16 @@ from app.models.weather import WeatherData
 from app.services.correlation import calculate_visibility_score, get_recommendation
 
 
+def _default_sun_darkness():
+    return {"elevation_deg": -30.0, "twilight_phase": "darkness", "penalty_pts": 0.0}
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
 @patch('app.services.correlation.calculate_moon_penalty')
-def test_excellent_conditions(mock_moon):
+def test_excellent_conditions(mock_moon, mock_sun):
     """Test excellent aurora viewing conditions"""
     mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = _default_sun_darkness()
     aurora = AuroraData(
         source="test",
         kp_index=6.0,
@@ -36,10 +42,12 @@ def test_excellent_conditions(mock_moon):
     assert "excellent" in score.recommendation.lower()
 
 
+@patch('app.services.correlation.calculate_sun_penalty')
 @patch('app.services.correlation.calculate_moon_penalty')
-def test_poor_conditions_low_kp(mock_moon):
+def test_poor_conditions_low_kp(mock_moon, mock_sun):
     """Test poor conditions due to low KP index"""
     mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = _default_sun_darkness()
     aurora = AuroraData(
         source="test",
         kp_index=1.0,  # Very low
@@ -62,10 +70,12 @@ def test_poor_conditions_low_kp(mock_moon):
     assert "low" in score.recommendation.lower()
 
 
+@patch('app.services.correlation.calculate_sun_penalty')
 @patch('app.services.correlation.calculate_moon_penalty')
-def test_poor_conditions_heavy_clouds(mock_moon):
+def test_poor_conditions_heavy_clouds(mock_moon, mock_sun):
     """Test poor conditions due to heavy cloud cover"""
     mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = _default_sun_darkness()
     aurora = AuroraData(
         source="test",
         kp_index=5.0,
@@ -87,10 +97,12 @@ def test_poor_conditions_heavy_clouds(mock_moon):
     assert "cloud" in score.recommendation.lower() or score.total_score < 60
 
 
+@patch('app.services.correlation.calculate_sun_penalty')
 @patch('app.services.correlation.calculate_moon_penalty')
-def test_fair_conditions(mock_moon):
+def test_fair_conditions(mock_moon, mock_sun):
     """Test fair viewing conditions"""
     mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = _default_sun_darkness()
     aurora = AuroraData(
         source="test",
         kp_index=4.0,
@@ -112,10 +124,12 @@ def test_fair_conditions(mock_moon):
     assert score.breakdown.precipitation < 10  # Reduced precip score
 
 
+@patch('app.services.correlation.calculate_sun_penalty')
 @patch('app.services.correlation.calculate_moon_penalty')
-def test_score_boundaries(mock_moon):
+def test_score_boundaries(mock_moon, mock_sun):
     """Test that scores stay within bounds"""
     mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = _default_sun_darkness()
     aurora = AuroraData(
         source="test",
         kp_index=9.0,  # Maximum
@@ -140,10 +154,12 @@ def test_score_boundaries(mock_moon):
     assert 0 <= score.breakdown.precipitation <= 10
 
 
+@patch('app.services.correlation.calculate_sun_penalty')
 @patch('app.services.correlation.calculate_moon_penalty')
-def test_recommendation_ranges(mock_moon):
+def test_recommendation_ranges(mock_moon, mock_sun):
     """Test recommendation generation for different score ranges"""
     mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = _default_sun_darkness()
     # Excellent (KP >= 3 required)
     rec = get_recommendation(85, 5.0, 10.0, lat=55.7)
     assert "excellent" in rec.lower()
@@ -186,10 +202,12 @@ def test_recommendation_ranges(mock_moon):
     assert "too low" in rec.lower()
 
 
+@patch('app.services.correlation.calculate_sun_penalty')
 @patch('app.services.correlation.calculate_moon_penalty')
-def test_no_outdoor_suggestion_without_aurora(mock_moon):
+def test_no_outdoor_suggestion_without_aurora(mock_moon, mock_sun):
     """Perfect weather + KP 2.5 should NOT suggest going outside"""
     mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = _default_sun_darkness()
     aurora = AuroraData(
         source="test",
         kp_index=2.5,
@@ -212,10 +230,12 @@ def test_no_outdoor_suggestion_without_aurora(mock_moon):
     assert "worth checking" not in score.recommendation.lower()
 
 
+@patch('app.services.correlation.calculate_sun_penalty')
 @patch('app.services.correlation.calculate_moon_penalty')
-def test_kp_3_is_minimum_threshold(mock_moon):
+def test_kp_3_is_minimum_threshold(mock_moon, mock_sun):
     """KP just above the dynamic threshold should be treated as sufficient aurora activity"""
     mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = _default_sun_darkness()
     aurora = AuroraData(
         source="test",
         kp_index=3.2,
@@ -237,10 +257,12 @@ def test_kp_3_is_minimum_threshold(mock_moon):
     assert "active" in score.recommendation.lower() or "possible" in score.recommendation.lower()
 
 
+@patch('app.services.correlation.calculate_sun_penalty')
 @patch('app.services.correlation.calculate_moon_penalty')
-def test_moon_penalty_reduces_score(mock_moon):
+def test_moon_penalty_reduces_score(mock_moon, mock_sun):
     """Moon penalty should reduce total score by penalty_pts."""
     mock_moon.return_value = {"illumination": 1.0, "elevation_deg": 45.0, "penalty_pts": 10.6}
+    mock_sun.return_value = _default_sun_darkness()
     aurora = AuroraData(source="test", kp_index=5.0, last_updated=datetime.now(timezone.utc))
     weather = WeatherData(
         source="test",
@@ -254,3 +276,122 @@ def test_moon_penalty_reduces_score(mock_moon):
     assert score.breakdown.moon.penalty_pts == 10.6
     assert score.total_score == pytest.approx(69.4, abs=0.5)
     assert score.total_score <= 80.0  # always less than base
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_sun_penalty_daylight(mock_moon, mock_sun):
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = {"elevation_deg": 20.0, "twilight_phase": "daylight", "penalty_pts": 50.0}
+    aurora = AuroraData(source="test", kp_index=5.0, last_updated=datetime.now(timezone.utc))
+    weather = WeatherData(source="test", cloud_cover=0.0, visibility_km=30.0, precipitation_mm=0.0, last_updated=datetime.now(timezone.utc))
+
+    score = calculate_visibility_score(aurora, weather)
+
+    assert score.total_score == pytest.approx(30.0, abs=0.1)
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_sun_penalty_civil_twilight(mock_moon, mock_sun):
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = {"elevation_deg": -2.0, "twilight_phase": "civil_twilight", "penalty_pts": 40.0}
+    aurora = AuroraData(source="test", kp_index=5.0, last_updated=datetime.now(timezone.utc))
+    weather = WeatherData(source="test", cloud_cover=0.0, visibility_km=30.0, precipitation_mm=0.0, last_updated=datetime.now(timezone.utc))
+
+    score = calculate_visibility_score(aurora, weather)
+
+    assert score.total_score == pytest.approx(40.0, abs=0.1)
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_sun_penalty_nautical_twilight(mock_moon, mock_sun):
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = {"elevation_deg": -8.0, "twilight_phase": "nautical_twilight", "penalty_pts": 20.0}
+    aurora = AuroraData(source="test", kp_index=5.0, last_updated=datetime.now(timezone.utc))
+    weather = WeatherData(source="test", cloud_cover=0.0, visibility_km=30.0, precipitation_mm=0.0, last_updated=datetime.now(timezone.utc))
+
+    score = calculate_visibility_score(aurora, weather)
+
+    assert score.total_score == pytest.approx(60.0, abs=0.1)
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_sun_penalty_astronomical_twilight(mock_moon, mock_sun):
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = {"elevation_deg": -15.0, "twilight_phase": "astronomical_twilight", "penalty_pts": 8.0}
+    aurora = AuroraData(source="test", kp_index=5.0, last_updated=datetime.now(timezone.utc))
+    weather = WeatherData(source="test", cloud_cover=0.0, visibility_km=30.0, precipitation_mm=0.0, last_updated=datetime.now(timezone.utc))
+
+    score = calculate_visibility_score(aurora, weather)
+
+    assert score.total_score == pytest.approx(72.0, abs=0.1)
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_sun_penalty_darkness(mock_moon, mock_sun):
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = _default_sun_darkness()
+    aurora = AuroraData(source="test", kp_index=5.0, last_updated=datetime.now(timezone.utc))
+    weather = WeatherData(source="test", cloud_cover=0.0, visibility_km=30.0, precipitation_mm=0.0, last_updated=datetime.now(timezone.utc))
+
+    score = calculate_visibility_score(aurora, weather)
+
+    assert score.total_score == pytest.approx(80.0, abs=0.1)
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_sun_penalty_score_floor(mock_moon, mock_sun):
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = {"elevation_deg": 35.0, "twilight_phase": "daylight", "penalty_pts": 50.0}
+    aurora = AuroraData(source="test", kp_index=0.0, last_updated=datetime.now(timezone.utc))
+    weather = WeatherData(source="test", cloud_cover=100.0, visibility_km=1.0, precipitation_mm=3.0, last_updated=datetime.now(timezone.utc))
+
+    score = calculate_visibility_score(aurora, weather)
+
+    assert score.total_score == 0.0
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_sun_data_in_breakdown(mock_moon, mock_sun):
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = {"elevation_deg": -8.0, "twilight_phase": "nautical_twilight", "penalty_pts": 20.0}
+    aurora = AuroraData(source="test", kp_index=5.0, last_updated=datetime.now(timezone.utc))
+    weather = WeatherData(source="test", cloud_cover=0.0, visibility_km=30.0, precipitation_mm=0.0, last_updated=datetime.now(timezone.utc))
+
+    score = calculate_visibility_score(aurora, weather)
+
+    assert score.breakdown.sun.elevation_deg == -8.0
+    assert score.breakdown.sun.twilight_phase == "nautical_twilight"
+    assert score.breakdown.sun.penalty_pts == 20.0
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_daylight_recommendation(mock_moon, mock_sun):
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = {"elevation_deg": 20.0, "twilight_phase": "daylight", "penalty_pts": 50.0}
+    aurora = AuroraData(source="test", kp_index=7.0, last_updated=datetime.now(timezone.utc))
+    weather = WeatherData(source="test", cloud_cover=0.0, visibility_km=30.0, precipitation_mm=0.0, last_updated=datetime.now(timezone.utc))
+
+    score = calculate_visibility_score(aurora, weather)
+
+    assert score.recommendation == "It is currently daylight. Aurora borealis is not visible during the day."
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
+@patch('app.services.correlation.calculate_moon_penalty')
+def test_civil_twilight_recommendation(mock_moon, mock_sun):
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = {"elevation_deg": -3.0, "twilight_phase": "civil_twilight", "penalty_pts": 40.0}
+    aurora = AuroraData(source="test", kp_index=7.0, last_updated=datetime.now(timezone.utc))
+    weather = WeatherData(source="test", cloud_cover=0.0, visibility_km=30.0, precipitation_mm=0.0, last_updated=datetime.now(timezone.utc))
+
+    score = calculate_visibility_score(aurora, weather)
+
+    assert score.recommendation == "Civil twilight — the sky is too bright for aurora viewing. Wait until full darkness."

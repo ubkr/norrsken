@@ -217,7 +217,11 @@
 .progress-fill.visibility { background: var(--color-metric-visibility); }
 .progress-fill.precipitation { background: var(--color-metric-precip); }
 .progress-fill.moon-penalty {
-    background-color: #c084fc;
+    background-color: var(--color-moon-penalty);
+}
+
+.progress-fill.sun-penalty {
+    background-color: var(--color-sun-penalty);
 }
 
 /* Score Status Modifiers (applied via JS) */

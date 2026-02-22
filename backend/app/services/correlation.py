@@ -1,8 +1,11 @@
 """Visibility scoring algorithm"""
+from datetime import datetime, timezone
+
 from ..models.aurora import AuroraData
 from ..models.weather import WeatherData
-from ..models.prediction import VisibilityScore, VisibilityBreakdown, MoonData
+from ..models.prediction import VisibilityScore, VisibilityBreakdown, MoonData, SunData
 from ..utils.moon import calculate_moon_penalty
+from ..utils.sun import calculate_sun_penalty
 
 
 def _min_kp_for_lat(lat: float) -> float:
@@ -77,19 +80,30 @@ def calculate_visibility_score(
     else:
         precip_score = 0
 
-    moon_data = calculate_moon_penalty(lat, lon)
+    now_utc = datetime.now(timezone.utc)
+    moon_data = calculate_moon_penalty(lat, lon, dt=now_utc)
+    sun_data = calculate_sun_penalty(lat, lon, dt=now_utc)
 
     # Total score
     total_score = max(
         0.0,
         round(
-            aurora_score + cloud_score + vis_score + precip_score - moon_data["penalty_pts"],
+            aurora_score
+            + cloud_score
+            + vis_score
+            + precip_score
+            - moon_data["penalty_pts"]
+            - sun_data["penalty_pts"],
             1,
         ),
     )
 
     # Generate recommendation
     recommendation = get_recommendation(total_score, kp, cloud_pct, lat)
+    if sun_data["twilight_phase"] == "daylight":
+        recommendation = "It is currently daylight. Aurora borealis is not visible during the day."
+    elif sun_data["twilight_phase"] == "civil_twilight":
+        recommendation = "Civil twilight — the sky is too bright for aurora viewing. Wait until full darkness."
 
     return VisibilityScore(
         total_score=total_score,
@@ -102,6 +116,11 @@ def calculate_visibility_score(
                 illumination=moon_data["illumination"],
                 elevation_deg=moon_data["elevation_deg"],
                 penalty_pts=moon_data["penalty_pts"],
+            ),
+            sun=SunData(
+                elevation_deg=sun_data["elevation_deg"],
+                twilight_phase=sun_data["twilight_phase"],
+                penalty_pts=sun_data["penalty_pts"],
             ),
         ),
         recommendation=recommendation

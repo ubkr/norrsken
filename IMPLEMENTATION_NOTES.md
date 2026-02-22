@@ -27,11 +27,12 @@ This project is implemented as a Python FastAPI backend with a vanilla JavaScrip
     - NOAA grid interpolation using bilinear interpolation
 
 2. **Frontend (Vanilla JS/HTML/CSS)**
-    - Dark-themed responsive UI
-    - Visibility score card and source data cards
-    - 24-hour forecast chart (Chart.js)
-    - Auto-refresh every 5 minutes
-    - Location picker flow:
+      - Dark-themed responsive UI
+      - Visibility score card and source data cards
+      - Visibility score breakdown includes both moon penalty and sun/daylight penalty, including twilight phase and sun elevation
+      - 24-hour forecast chart (Chart.js)
+      - Auto-refresh every 5 minutes
+      - Location picker flow:
        - `settings-modal.js`
        - `map-selector.js` (Leaflet)
        - `location-manager.js` (reverse geocoding, warning when outside Sweden, and persistence in browser `localStorage` under `aurora_location`)
@@ -245,7 +246,7 @@ norrsken/
 
 ## Scoring Algorithm
 
-The visibility score is a sum of positive components minus a moon penalty, capped 0–100.
+The visibility score is a sum of positive components minus moon and sun/daylight penalties, capped 0–100.
 
 ### Positive Components (max 100 pts)
 
@@ -262,14 +263,36 @@ Based on Krisciunas & Schaefer (1991) sky-brightness model and common aurora-for
 
 ```text
 Moon_Factor  = Illumination_Fraction × max(0, sin(Moon_Elevation_radians))
-penalty_pts  = min(15, round(Moon_Factor × 15, 1))
-Final_Score  = max(0, Component_Sum − penalty_pts)
+moon_penalty = min(15, round(Moon_Factor × 15, 1))
+Final_Score  = max(0, Component_Sum − moon_penalty − sun_penalty)
 ```
 
 - **Illumination fraction**: 0 (new moon) → 1 (full moon), computed by `ephem` (Meeus algorithm)
 - **Moon elevation**: real-time altitude for the user's location; negative elevation → 0 penalty
 - **Maximum penalty**: 15 pts, occurs only when full moon is directly overhead
 - **Rationale**: a strong aurora (KP ≥ 7) yields 40 aurora pts; a 15-pt moonlight penalty still leaves a high total, reflecting that very active aurora remains visible under a full moon
+
+### Sun / Daylight Penalty
+
+Aurora is only visible in darkness, so the sun's position strongly affects practical visibility.
+The sun/daylight penalty uses the `ephem` library to compute sun elevation for the user's selected coordinates at the current UTC time.
+
+| Condition | Penalty | `twilight_phase` |
+|-----------|---------|------------------|
+| Full daylight (sun ≥ 0°) | 50 pts | `daylight` |
+| Civil twilight (-6° to 0°) | 40 pts | `civil_twilight` |
+| Nautical twilight (-12° to -6°) | 20 pts | `nautical_twilight` |
+| Astronomical twilight (-18° to -12°) | 8 pts | `astronomical_twilight` |
+| Full darkness (sun < -18°) | 0 pts | `darkness` |
+
+```text
+Final_Score = max(0, Component_Sum − moon_penalty − sun_penalty)
+```
+
+- **Midnight sun note**: at high latitudes in summer, the sun can remain above the horizon all day, resulting in a constant daylight penalty
+- **Time consistency**: a shared UTC timestamp is used for both moon and sun calculations to keep penalties internally consistent
+
+Final score uses a 0–100 scale: positive components sum to at most 100, then moon and sun/daylight penalties are subtracted, and the result is clamped to 0 at the lower bound.
 
 ## Known Issues
 

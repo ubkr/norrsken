@@ -20,6 +20,8 @@ export class VisibilityScoreDisplay {
         this.precipitationValueEl = document.getElementById('precipitationValue');
         this.moonPenaltyBarEl = document.getElementById('moonPenaltyBar');
         this.moonPenaltyValueEl = document.getElementById('moonPenaltyValue');
+        this.sunPenaltyBarEl = document.getElementById('sunPenaltyBar');
+        this.sunPenaltyValueEl = document.getElementById('sunPenaltyValue');
     }
 
     /**
@@ -56,6 +58,22 @@ export class VisibilityScoreDisplay {
             this.moonPenaltyBarEl.style.width = `${pct}%`;
             const illuminationPct = Math.round(breakdown.moon.illumination * 100);
             this.moonPenaltyValueEl.textContent = `-${penalty.toFixed(1)} pts (${illuminationPct}% lit, ${breakdown.moon.elevation_deg.toFixed(0)}° alt)`;
+        } else if (this.moonPenaltyBarEl && this.moonPenaltyValueEl) {
+            this.moonPenaltyBarEl.style.width = '0%';
+            this.moonPenaltyValueEl.textContent = '-0 pts';
+        }
+
+        if (breakdown.sun && this.sunPenaltyBarEl && this.sunPenaltyValueEl) {
+            const penalty = breakdown.sun.penalty_pts;
+            const pct = Math.round((penalty / 50) * 100);
+            this.sunPenaltyBarEl.style.width = `${pct}%`;
+            const phase = breakdown.sun.twilight_phase.replace(/_/g, ' ');
+            const elev = breakdown.sun.elevation_deg.toFixed(0);
+            const sign = breakdown.sun.elevation_deg >= 0 ? '+' : '';
+            this.sunPenaltyValueEl.textContent = `-${penalty.toFixed(1)} pts (${phase}, ${sign}${elev}°)`;
+        } else if (this.sunPenaltyBarEl && this.sunPenaltyValueEl) {
+            this.sunPenaltyBarEl.style.width = '0%';
+            this.sunPenaltyValueEl.textContent = '-0 pts';
         }
     }
 
