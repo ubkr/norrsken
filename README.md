@@ -23,17 +23,12 @@ Real-time aurora borealis visibility predictions for Södra Sandby, Sweden (55.7
 
 ## Architecture
 
-**Backend**: Python FastAPI
+**Server**: Python FastAPI + static frontend
 - Fetches aurora and weather data from multiple APIs
 - Calculates visibility scores with weighted algorithm
-- Provides REST endpoints for frontend
+- Serves the web application and REST endpoints
 - In-memory caching to reduce API calls
-
-**Frontend**: HTML/CSS/JavaScript
-- Displays current visibility score with breakdown
-- Shows data from all sources for comparison
-- 24-hour forecast chart using Chart.js
-- Responsive design for mobile
+- Frontend built with HTML/CSS/JavaScript
 
 ## Installation
 
@@ -53,13 +48,17 @@ pip install -r requirements.txt
 cp ../.env.example .env
 ```
 
-### Frontend
-
-No build step required. Uses vanilla JavaScript with ES modules.
-
 ## Running Locally
 
-### Start Backend
+### Start Server
+
+From project root:
+
+```bash
+./start-backend.sh
+```
+
+Or manually:
 
 ```bash
 cd backend
@@ -67,18 +66,9 @@ source venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-API will be available at:
-- **API**: `http://localhost:8000`
+Application will be available at:
+- **App**: `http://localhost:8000`
 - **Docs**: `http://localhost:8000/docs`
-
-### Start Frontend
-
-```bash
-cd frontend
-python3 -m http.server 3000
-```
-
-Visit `http://localhost:3000` in your browser.
 
 ## API Endpoints
 
