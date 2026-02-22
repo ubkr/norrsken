@@ -158,6 +158,22 @@ class DataAggregator:
         if primary is None:
             raise Exception("All weather data sources failed")
 
+        # Keep primary source priority for weather conditions, but patch visibility
+        # from the best available fallback source when primary has no visibility data.
+        if primary.visibility_km is None:
+            best_vis = None
+            source_name = None
+            if secondary is not None and secondary.visibility_km is not None:
+                best_vis = secondary.visibility_km
+                source_name = secondary.source
+            elif tertiary is not None and tertiary.visibility_km is not None:
+                best_vis = tertiary.visibility_km
+                source_name = tertiary.source
+
+            if best_vis is not None:
+                logger.info(f"Patched primary visibility with {source_name} value: {best_vis} km")
+                primary = primary.model_copy(update={"visibility_km": best_vis})
+
         return WeatherResponse(
             primary=primary,
             secondary=secondary,

@@ -7,7 +7,7 @@ class WeatherData(BaseModel):
     """Weather data from a single source"""
     source: str = Field(..., description="Data source name (e.g., 'smhi', 'open_meteo')")
     cloud_cover: float = Field(..., ge=0, le=100, description="Cloud cover percentage (0-100)")
-    visibility_km: float = Field(..., ge=0, description="Visibility in kilometers")
+    visibility_km: Optional[float] = Field(None, ge=0, description="Visibility in kilometers")
     precipitation_mm: float = Field(..., ge=0, description="Precipitation in millimeters")
     temperature_c: Optional[float] = Field(None, description="Temperature in Celsius")
     last_updated: datetime = Field(..., description="Timestamp of last data update")

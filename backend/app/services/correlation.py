@@ -61,7 +61,10 @@ def calculate_visibility_score(
         cloud_score = 0
 
     # Visibility score (0-20 points)
-    vis_km = weather.visibility_km
+    # Some sources (e.g. Met.no compact) do not provide measured visibility.
+    # Fall back to a neutral middle-ground value of 15 km so missing data
+    # lands in the true middle bucket (>10 km => 15 points).
+    vis_km = weather.visibility_km if weather.visibility_km is not None else 15.0
     if vis_km > 20:
         vis_score = 20
     elif vis_km > 10:

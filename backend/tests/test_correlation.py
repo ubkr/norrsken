@@ -126,6 +126,32 @@ def test_fair_conditions(mock_moon, mock_sun):
 
 @patch('app.services.correlation.calculate_sun_penalty')
 @patch('app.services.correlation.calculate_moon_penalty')
+def test_visibility_score_uses_neutral_fallback_when_visibility_missing(mock_moon, mock_sun):
+    """When visibility is missing, correlation should use neutral 15 km fallback (15 points)."""
+    mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
+    mock_sun.return_value = _default_sun_darkness()
+    aurora = AuroraData(
+        source="test",
+        kp_index=5.0,
+        probability=40.0,
+        last_updated=datetime.utcnow()
+    )
+    weather = WeatherData(
+        source="test",
+        cloud_cover=20.0,
+        visibility_km=None,
+        precipitation_mm=0.0,
+        temperature_c=2.0,
+        last_updated=datetime.utcnow()
+    )
+
+    score = calculate_visibility_score(aurora, weather)
+
+    assert score.breakdown.visibility == 15
+
+
+@patch('app.services.correlation.calculate_sun_penalty')
+@patch('app.services.correlation.calculate_moon_penalty')
 def test_score_boundaries(mock_moon, mock_sun):
     """Test that scores stay within bounds"""
     mock_moon.return_value = {"illumination": 0.0, "elevation_deg": -30.0, "penalty_pts": 0.0}
