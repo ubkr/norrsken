@@ -1,5 +1,5 @@
 #!/bin/bash
-# Start the Aurora Visibility backend server
+# Start the Aurora Visibility server
 
 cd "$(dirname "$0")/backend"
 
@@ -7,8 +7,8 @@ cd "$(dirname "$0")/backend"
 source venv/bin/activate
 
 # Start server
-echo "Starting Aurora Visibility API..."
-echo "API will be available at http://localhost:8000"
+echo "Starting Aurora Visibility application..."
+echo "Application will be available at http://localhost:8000"
 echo "API docs at http://localhost:8000/docs"
 echo ""
 
