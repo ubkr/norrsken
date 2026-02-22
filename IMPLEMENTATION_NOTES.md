@@ -13,7 +13,7 @@ This project is implemented as a Python FastAPI backend with a vanilla JavaScrip
        - `/api/v1/aurora/sources` (supports optional `lat` and `lon` query parameters)
        - `/api/v1/weather/sources` (supports optional `lat` and `lon` query parameters)
        - `/api/v1/health`
-    - Latitude and longitude are provided as a pair for coordinate-aware requests. Supplying only one returns HTTP 422.
+      - For `/api/v1/aurora/sources` and `/api/v1/weather/sources`, latitude and longitude must be provided as a pair (supplying only one returns HTTP 422). Prediction endpoints (`/api/v1/prediction/current`, `/api/v1/prediction/forecast`) accept `lat` and `lon` independently, and each omitted value defaults to the configured location.
     - Multi-source aggregation with fallback logic
     - In-memory caching:
        - Aurora TTL: 5 minutes
@@ -66,7 +66,6 @@ This project is implemented as a Python FastAPI backend with a vanilla JavaScrip
 ### Aurora Sources (in fallback order)
 1. NOAA SWPC (primary)
 2. Auroras.live (secondary)
-3. Aurora Space (tertiary)
 
 ### Weather Sources (in fallback order)
 1. Met.no (primary)
@@ -78,7 +77,6 @@ This project is implemented as a Python FastAPI backend with a vanilla JavaScrip
 - Met.no: working
 - Auroras.live: returning HTTP 500 errors
 - SMHI: returning HTML instead of expected JSON
-- Aurora Space: present as tertiary fallback, not verified
 
 ## Quick Start
 
@@ -173,7 +171,7 @@ curl http://localhost:8000/api/v1/weather/sources | python3 -m json.tool
 curl "http://localhost:8000/api/v1/weather/sources?lat=55.7&lon=13.4" | python3 -m json.tool
 ```
 
-## Project Structure
+## Project Structure (simplified)
 
 ```text
 norrsken/
@@ -206,8 +204,11 @@ norrsken/
 │   │   │   └── weather.py
 │   │   └── utils/
 │   │       ├── geo.py
-│   │       └── logger.py
+│   │       ├── logger.py
+│   │       ├── moon.py
+│   │       └── sun.py
 │   ├── tests/
+│   │   ├── test_aggregator_visibility.py
 │   │   ├── test_correlation.py
 │   │   ├── test_geo.py
 │   │   └── test_metno_client.py
@@ -309,7 +310,7 @@ The visibility score is calculated on a 0-100 scale using weighted components:
 - 20% visibility distance
 - 10% precipitation
 
-The weighting adapts dynamically to the user's selected latitude.
+Component weights are fixed (aurora 40, clouds 30, visibility 20, precipitation 10); latitude affects the aurora KP threshold and scaling within the aurora component, not the weights themselves.
 
 ### NOAA Grid Interpolation
 

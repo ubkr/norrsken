@@ -9,14 +9,17 @@ Real-time aurora borealis visibility predictions for Södra Sandby, Sweden (55.7
   - Cloud cover
   - Visibility distance
   - Precipitation
+  - Moon phase/elevation and sun/daylight penalties
 
 - **Multiple data sources** for reliability:
-  - Aurora: NOAA SWPC, Auroras.live, Aurora Space
-  - Weather: SMHI (Swedish official), Open-Meteo
+  - Aurora: NOAA SWPC, Auroras.live
+  - Weather: Met.no, SMHI, Open-Meteo
 
 - **24-hour forecast** with hourly predictions
 
 - **Auto-refresh** every 5 minutes
+
+- **Location picker** with interactive map modal
 
 ## Architecture
 
@@ -72,7 +75,7 @@ API will be available at:
 
 ```bash
 cd frontend
-python -m http.server 3000
+python3 -m http.server 3000
 ```
 
 Visit `http://localhost:3000` in your browser.
@@ -81,15 +84,19 @@ Visit `http://localhost:3000` in your browser.
 
 ### `GET /api/v1/prediction/current`
 Current prediction with visibility score and all data sources.
+Optional query params: `lat`, `lon` (each optional; omitted values use configured default location; supply both to target a custom location).
 
 ### `GET /api/v1/prediction/forecast?hours=24`
 Hourly predictions for next N hours.
+Optional query params: `lat`, `lon` (each optional; omitted values use configured default location; supply both to target a custom location).
 
 ### `GET /api/v1/aurora/sources`
 Aurora data from all sources for comparison.
+Optional query params: `lat`, `lon` (must be provided together; only one returns HTTP 422).
 
 ### `GET /api/v1/weather/sources`
 Weather data from all sources for comparison.
+Optional query params: `lat`, `lon` (must be provided together; only one returns HTTP 422).
 
 ### `GET /api/v1/health`
 Health check endpoint.
@@ -104,6 +111,22 @@ Health check endpoint.
 | Cloud Cover | 30% | Lower is better (<25% = full points) |
 | Visibility | 20% | Distance (>20km = full points) |
 | Precipitation | 10% | None = full points |
+
+### Night Sky Penalties
+
+- **Moon penalty**: up to 15 points
+  - `Moon_Factor = Illumination × max(0, sin(Moon_Elevation))`
+  - Deducts 0-15 points based on moon illumination and elevation (computed with `ephem`)
+
+- **Sun/daylight penalty**: up to 50 points (based on sun elevation)
+  - Daylight (`≥ 0°`): 50 points
+  - Civil twilight (`-6° to <0°`): 40 points
+  - Nautical twilight (`-12° to <-6°`): 20 points
+  - Astronomical twilight (`-18° to <-12°`): 8 points
+  - Full darkness (`< -18°`): 0 points
+
+- **Final score**
+  - `max(0, positive_sum - moon_penalty - sun_penalty)`
 
 **Score Ranges:**
 - 80-100: Excellent - Great chance to see aurora
@@ -126,20 +149,20 @@ Health check endpoint.
 - Real-time KP index
 - API: `https://api.auroras.live/v1/`
 
-**Aurora Space** (Tertiary)
-- Simple KP index
-- 30-minute updates
-- API: `https://auroraforecast.space/api/kp/now`
-
 ### Weather Data
 
-**SMHI** (Primary - Swedish Official)
+**Met.no** (Primary - Norwegian Meteorological Institute)
+- High-resolution Nordic weather forecasts
+- Requires User-Agent header
+- API: `https://api.met.no/weatherapi/locationforecast/2.0/compact`
+
+**SMHI** (Secondary - Swedish Official)
 - 2.5km resolution forecasts
 - Cloud cover in oktas (0-8 scale)
 - 6-hour updates
 - API: SMHI Open Data Meteorological Forecasts
 
-**Open-Meteo** (Secondary)
+**Open-Meteo** (Tertiary)
 - 1-2km resolution
 - 10,000 free calls/day
 - Hourly updates
@@ -187,14 +210,35 @@ norrsken/
 │   │   │   └── aggregator.py          # Multi-source fetching
 │   │   ├── api/routes/                # API endpoints
 │   │   └── utils/                     # Utilities
+│   │       ├── geo.py
+│   │       ├── logger.py
+│   │       ├── moon.py
+│   │       └── sun.py
 │   └── tests/                         # Unit tests
 ├── frontend/
 │   ├── index.html
-│   ├── css/main.css
+│   ├── css/
+│   │   ├── tokens.css
+│   │   ├── base.css
+│   │   ├── layout.css
+│   │   ├── main.css
+│   │   └── components/
+│   │       ├── score.css
+│   │       ├── data-cards.css
+│   │       ├── chart.css
+│   │       └── modal.css
 │   └── js/
 │       ├── main.js                    # App initialization
 │       ├── api.js                     # API client
+│       ├── location-manager.js
 │       └── components/                # UI components
+│           ├── aurora-display.js
+│           ├── weather-display.js
+│           ├── forecast-chart.js
+│           ├── settings-modal.js
+│           ├── map-selector.js
+│           ├── tooltip.js
+│           └── visibility-score.js
 └── README.md
 ```
 
