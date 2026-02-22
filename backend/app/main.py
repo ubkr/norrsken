@@ -1,7 +1,14 @@
+import os
+
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from .config import settings
-from .api.routes import health, prediction, aurora, weather
+from .api.routes import health, prediction, aurora, weather, geocode
+
+FRONTEND_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
+)
 
 app = FastAPI(
     title=settings.api_title,
@@ -9,27 +16,18 @@ app = FastAPI(
     description=settings.api_description,
 )
 
-# CORS middleware for frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Register routes
 app.include_router(health.router)
 app.include_router(prediction.router)
 app.include_router(aurora.router)
 app.include_router(weather.router)
+app.include_router(geocode.router)
 
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
-    return {
-        "message": "Aurora Visibility Prediction API",
-        "docs": "/docs",
-        "health": "/api/v1/health"
-    }
+    """Serve frontend index page."""
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
+
+app.mount("/", StaticFiles(directory=FRONTEND_DIR), name="frontend")
